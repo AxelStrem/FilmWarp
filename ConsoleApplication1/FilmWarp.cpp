@@ -38,10 +38,13 @@ int main(int argc, char *argv[])
 
     for (long long f = 0; f < frame_count; f++)
     {
-        source >> frame;              
+        source >> frame;   
+        if (frame.empty()) break;
            
         split(frame, spl);               
         std::swap(spl[0], spl[2]);
+        std::swap(spl[1], spl[2]);
+
         merge(spl, result);
 
         dest << result;

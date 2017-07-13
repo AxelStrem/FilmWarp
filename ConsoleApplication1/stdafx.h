@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <tchar.h>
 
-#include <vector>
+//#include <vector>
 #include <algorithm>
 #include <iostream>
 #include <string>
