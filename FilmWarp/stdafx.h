@@ -12,6 +12,7 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <queue>
 
 #include <boost\range.hpp>
 #include <boost\range\algorithm.hpp>

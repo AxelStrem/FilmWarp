@@ -33,19 +33,50 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    Mat frame, result;
+    Mat frame;
     vector<Mat> spl;
 
-    for (long long f = 0; f < frame_count; f++)
-    {
-        source >> frame;   
-        if (frame.empty()) break;
-           
-        split(frame, spl);               
-        std::swap(spl[0], spl[2]);
-        std::swap(spl[1], spl[2]);
+    long long chunk = frame_count / 25;
+    long long limit = chunk;
 
-        merge(spl, result);
+    cout << endl;
+
+    source >> frame;
+
+    Mat result = frame.clone();
+    dest << result;
+
+    queue<Mat> qm;
+    for (int k = 0; k < res.height; k++)
+        qm.push(frame.clone());
+
+    int s1 = frame.step[0];
+    int s2 = frame.step[1];
+
+
+    for (long long f = 1; f < frame_count; f++)
+    {
+        if (f > limit)
+        {
+            limit += chunk;
+            cout << '*';
+        }
+        source >> frame;  
+        if (frame.empty()) break;
+
+        for (int i = 0; i < 20000; i++)
+        {
+            int x = rand() % (res.width);
+            int y = rand() % (res.height);
+
+            unsigned char* s = frame.data + frame.step[0] * y + frame.step[1] * x;
+            unsigned char* d = result.data + result.step[0] * y + result.step[1] * x;
+
+            int k = rand() % 3;
+            {
+                d[k] = s[k];
+            }
+        }
 
         dest << result;
     }
