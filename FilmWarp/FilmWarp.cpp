@@ -10,6 +10,8 @@ int main(int argc, char *argv[])
     const string destReference = argv[2];
     const string expression = argv[3];
 
+    const int RS_DEL = 20;
+
     VideoCapture source(sourceReference);
     if (!source.isOpened())
     {
@@ -46,13 +48,14 @@ int main(int argc, char *argv[])
     Mat result = frame.clone();
     dest << result;
 
-    queue<Mat> qm;
-    for (int k = 0; k < res.height; k++)
-        qm.push(frame.clone());
+    vector<Mat> qm;
+    for (int k = 0; k < res.height/RS_DEL; k++)
+        qm.push_back(frame.clone());
 
     int s1 = frame.step[0];
     int s2 = frame.step[1];
 
+    int cf = 0;
 
     for (long long f = 1; f < frame_count; f++)
     {
@@ -61,20 +64,22 @@ int main(int argc, char *argv[])
             limit += chunk;
             cout << '*';
         }
-        source >> frame;  
-        if (frame.empty()) break;
+        source >> qm[cf];  
+        if (qm[cf].empty()) break;
 
-        for (int i = 0; i < 20000; i++)
+        if (--cf < 0)
+            cf += qm.size();
+
+        for (int i = 0; i < res.height; i += RS_DEL)
         {
-            int x = rand() % (res.width);
-            int y = rand() % (res.height);
-
-            unsigned char* s = frame.data + frame.step[0] * y + frame.step[1] * x;
-            unsigned char* d = result.data + result.step[0] * y + result.step[1] * x;
-
-            int k = rand() % 3;
+            int f1 = (cf + i / RS_DEL) % qm.size();
+            int f2 = (cf + 1 + i / RS_DEL) % qm.size();
+            for (int j = 0; j < RS_DEL; j++)
             {
-                d[k] = s[k];
+                float alpha = static_cast<float>(j) / RS_DEL;
+                float beta = 1.f - alpha;
+
+                result.row(i + j) = beta * qm[f1].row(i + j) + alpha * qm[f2].row(i + j);
             }
         }
 
