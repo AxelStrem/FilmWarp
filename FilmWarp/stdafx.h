@@ -12,11 +12,11 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
-#include <queue>
 
 #include <boost\range.hpp>
 #include <boost\range\algorithm.hpp>
 #include <boost\container\vector.hpp>
+#include <boost\circular_buffer.hpp>
 
 #include <opencv2\core.hpp>
 #include <opencv2\imgproc.hpp> 
