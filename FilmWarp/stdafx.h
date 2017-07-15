@@ -12,7 +12,9 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
-#include <queue>
+#include <unordered_map>
+#include <memory>
+#include <array>
 
 #include <boost\range.hpp>
 #include <boost\range\algorithm.hpp>
@@ -22,3 +24,16 @@
 #include <opencv2\imgproc.hpp> 
 #include <opencv2\videoio.hpp>
 #include <opencv2\highgui.hpp>
+
+template<class T, class Compare>
+constexpr const T& clamp(const T& v, const T& lo, const T& hi, Compare comp)
+{
+    return assert(!comp(hi, lo)),
+        comp(v, lo) ? lo : comp(hi, v) ? hi : v;
+}
+
+template<class T>
+constexpr const T& clamp(const T& v, const T& lo, const T& hi)
+{
+    return clamp(v, lo, hi, std::less<>());
+}
