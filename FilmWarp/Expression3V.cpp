@@ -39,6 +39,11 @@ void Expression3V::setIZ(long long zi_)
         p->setIZ(zi_);
 }
 
+float Expression3V::priority() const
+{
+    return 0.f;
+}
+
 std::vector<float> Expression3V::evaluateF() { return std::vector<float>(xf->size()); }
 std::vector<int> Expression3V::evaluateI() { return std::vector<int>(xi->size()); }
 
@@ -89,6 +94,11 @@ std::vector<int> ESum::evaluateI()
         }
     }
     return vec;
+}
+
+float ESum::priority() const
+{
+    return 1.0f;
 }
 
 
@@ -178,4 +188,33 @@ std::vector<float> EConstF::evaluateF()
 std::vector<int> EConstF::evaluateI()
 {
     return std::vector<int>(xi->size(), 0);
+}
+
+EClampI::EClampI(int low_, int high_) : low(low_), high(high_)
+{
+}
+
+bool EClampI::isPrecise() const
+{
+    return pChildren[0]->isPrecise();;
+}
+
+std::vector<float> EClampI::evaluateF()
+{
+    auto vec = pChildren[0]->evaluateF();
+    for (int i = 0; i < vec.size(); i++)
+    {
+        vec[i] = clamp<float>(vec[i],low,high);
+    }
+    return vec;
+}
+
+std::vector<int> EClampI::evaluateI()
+{
+    auto vec = pChildren[0]->evaluateI();
+    for (int i = 0; i < vec.size(); i++)
+    {
+        vec[i] = clamp<float>(vec[i], low, high);
+    }
+    return vec;
 }

@@ -16,6 +16,7 @@ protected:
 public:
     Expression3V();
     virtual bool isPrecise() const;
+    virtual float priority() const;
 
     void addChild(std::unique_ptr<Expression3V> pC);
 
@@ -62,6 +63,8 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual float priority() const;
 };
 
 class EScaleI : public Expression3V
@@ -107,5 +110,16 @@ public:
 
     virtual std::vector<float> evaluateF();
 
+    virtual std::vector<int> evaluateI();
+};
+
+class EClampI : public Expression3V
+{
+    int low, high;
+public:
+    EClampI(int low_, int high_);
+    virtual bool isPrecise() const;
+
+    virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
 };
