@@ -23,25 +23,30 @@ void process3(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expres
     input.getFrame(0).copyTo(frame);
 
     int pixel_amount = input.width() * input.height();
-    std::vector<std::common_type<XT,YT>::type> coord_x(pixel_amount), coord_y(pixel_amount);
+    std::vector<int> coord_x(pixel_amount), coord_y(pixel_amount);
+    std::vector<float> coord_xf(pixel_amount), coord_yf(pixel_amount);
 
     for (int i = 0; i < input.height(); i++)
         for (int j = 0; j < input.width(); j++)
         {
             coord_x[i*input.width() + j] = j;
             coord_y[i*input.width() + j] = i;
+            coord_xf[i*input.width() + j] = j;
+            coord_yf[i*input.width() + j] = i;
         }
 
     for (auto &expr : coord_exprs)
     {
         expr->setVars(&coord_x, &coord_y);
+        expr->setVars(&coord_xf, &coord_yf);
     }
 
-    for (long long f = 0; f < input.framecount(); f++)
+    for (int f = 0; f < input.framecount(); f++)
     {
-        ZT ft = f;
+        float ft = f;
         for (auto &expr : coord_exprs)
         {
+            expr->setZ(f);
             expr->setZ(ft);
         }
 

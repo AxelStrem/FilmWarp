@@ -166,12 +166,12 @@ bool EConstI::isPrecise() const
 
 std::vector<float> EConstI::evaluateF()
 {
-    return std::vector<float>(xf->size(), value);
+    return std::vector<float>(width, value);
 }
 
     std::vector<int> EConstI::evaluateI()
 {
-    return std::vector<int>(xi->size(), value);
+    return std::vector<int>(width, value);
 }
 
 
@@ -184,12 +184,12 @@ bool EConstF::isPrecise() const
 
 std::vector<float> EConstF::evaluateF()
 {
-    return std::vector<float>(xf->size(), value);
+    return std::vector<float>(width, value);
 }
 
 std::vector<int> EConstF::evaluateI()
 {
-    return std::vector<int>(xi->size(), 0);
+    return std::vector<int>(width, 0);
 }
 
 EClampI::EClampI(int low_, int high_) : low(low_), high(high_)
