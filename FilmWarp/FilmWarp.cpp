@@ -205,37 +205,42 @@ protected:
     double              zf;
     long long           zi;
 
-    std::vector<Expression3V*> pChildren;
+    std::vector<std::unique_ptr<Expression3V>> pChildren;
 
 public:
     Expression3V() : xf(nullptr), yf(nullptr), xi(nullptr), yi(nullptr), zf(0.0), zi(0) {}
     virtual bool isPrecise() const { return true; }
+
+    void addChild(std::unique_ptr<Expression3V> pC)
+    {
+        pChildren.push_back(std::move(pC));
+    }
     
     void setFVars(std::vector<float>* xf_, std::vector<float>* yf_) 
     { 
         xf = xf_; yf = yf_;
-        for (auto p : pChildren)
+        for (auto& p : pChildren)
             p->setFVars(xf_, yf_);
     }
 
     void setIVars(std::vector<int>* xi_, std::vector<int>* yi_)
     {
         xi = xi_; yi = yi_;
-        for (auto p : pChildren)
+        for (auto& p : pChildren)
             p->setIVars(xi_, yi_);
     }
 
     void setFZ(double zf_)
     {
         zf = zf_;
-        for (auto p : pChildren)
+        for (auto& p : pChildren)
             p->setFZ(zf_);
     }
 
     void setIZ(long long zi_)
     {
         zi = zi_;
-        for (auto p : pChildren)
+        for (auto& p : pChildren)
             p->setIZ(zi_);
     }
 
@@ -270,6 +275,148 @@ public:
     virtual std::vector<int> evaluateI() { return std::vector<int>(xi->size(), zi); }
 };
 
+class ESum : public Expression3V
+{
+public:
+    virtual bool isPrecise() const
+    { 
+        return std::all_of(pChildren.begin(), pChildren.end(), [](auto& ptr) { return ptr->isPrecise(); });
+    }
+
+    virtual std::vector<float> evaluateF()
+    {
+        auto vec = pChildren[0]->evaluateF();
+        for (auto it = pChildren.begin() + 1; it != pChildren.end(); ++it)
+        {
+            auto vadd = (*it)->evaluateF();
+            for (int i = 0; i < vec.size(); i++)
+            {
+                vec[i] += vadd[i];
+            }
+        }
+        return vec;
+    }
+
+    virtual std::vector<int> evaluateI()
+    {
+        auto vec = pChildren[0]->evaluateI();
+        for (auto it = pChildren.begin() + 1; it != pChildren.end(); ++it)
+        {
+            auto vadd = (*it)->evaluateI();
+            for (int i = 0; i < vec.size(); i++)
+            {
+                vec[i] += vadd[i];
+            }
+        }
+        return vec;
+    }
+};
+
+class EScaleI : public Expression3V
+{
+    int coef;
+public:
+    EScaleI(int scalar) : coef(scalar) {}
+    virtual bool isPrecise() const
+    {
+        return pChildren[0]->isPrecise();
+    }
+
+    virtual std::vector<float> evaluateF()
+    {
+        auto vec = pChildren[0]->evaluateF();
+        for (int i = 0; i < vec.size(); i++)
+        {
+            vec[i] *= coef;
+        }
+        return vec;
+    }
+
+    virtual std::vector<int> evaluateI()
+    {
+        auto vec = pChildren[0]->evaluateI();
+        for (int i = 0; i < vec.size(); i++)
+        {
+            vec[i] *= coef;
+        }
+        return vec;
+    }
+};
+
+class EScaleF : public Expression3V
+{
+    float coef;
+public:
+    EScaleF(float scalar) : coef(scalar) {}
+    virtual bool isPrecise() const
+    {
+        return false;
+    }
+
+    virtual std::vector<float> evaluateF()
+    {
+        auto vec = pChildren[0]->evaluateF();
+        for (int i = 0; i < vec.size(); i++)
+        {
+            vec[i] *= coef;
+        }
+        return vec;
+    }
+
+    virtual std::vector<int> evaluateI()
+    {
+        auto vec = pChildren[0]->evaluateI();
+        for (int i = 0; i < vec.size(); i++)
+        {
+            vec[i] *= coef;
+        }
+        return vec;
+    }
+};
+
+
+class EConstI : public Expression3V
+{
+    int value;
+public:
+    EConstI(int c) : value(c) {}
+    virtual bool isPrecise() const
+    {
+        return true;
+    }
+
+    virtual std::vector<float> evaluateF()
+    {
+        return std::vector<float>(xf->size(), value);
+    }
+
+    virtual std::vector<int> evaluateI()
+    {
+        return std::vector<int>(xi->size(), value);
+    }
+};
+
+class EConstF : public Expression3V
+{
+    float value;
+public:
+    EConstF(float c) : value(c) {}
+    virtual bool isPrecise() const
+    {
+        return false;
+    }
+
+    virtual std::vector<float> evaluateF()
+    {
+        return std::vector<float>(xf->size(), value);
+    }
+
+    virtual std::vector<int> evaluateI()
+    {
+        return std::vector<int>(xi->size(), 0);
+    }
+};
+
 int main(int argc, char *argv[])
 {
     stringstream conv;
@@ -298,7 +445,17 @@ int main(int argc, char *argv[])
             coord_y[i*input.width() + j] = i;
         }
 
-    std::array<std::unique_ptr<Expression3V>, 3> coord_exprs{ make_unique<EVarX>(), make_unique<EVarY>(), make_unique<EVarZ>() };
+    auto vary = make_unique<EVarY>();
+    auto inv = make_unique<EScaleI>(-1);
+    inv->addChild(std::move(vary));
+    
+    auto lim = make_unique<EConstI>(input.height() - 1);
+    auto sum = make_unique<ESum>();
+    sum->addChild(std::move(inv));
+    sum->addChild(std::move(lim));
+    
+
+    std::array<std::unique_ptr<Expression3V>, 3> coord_exprs{ make_unique<EVarX>(), std::move(sum), make_unique<EVarZ>() };
 
     input.loadFrame(0, input.framecount());
 
