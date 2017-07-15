@@ -10,6 +10,7 @@ protected:
     std::vector<int>*   yi;
     double              zf;
     long long           zi;
+    int width;
 
     std::vector<std::unique_ptr<Expression3V>> pChildren;
 
@@ -20,10 +21,10 @@ public:
 
     void addChild(std::unique_ptr<Expression3V> pC);
 
-    void setFVars(std::vector<float>* xf_, std::vector<float>* yf_);
-    void setIVars(std::vector<int>* xi_, std::vector<int>* yi_);
-    void setFZ(double zf_);
-    void setIZ(long long zi_);
+    void setVars(std::vector<float>* xf_, std::vector<float>* yf_);
+    void setVars(std::vector<int>* xi_, std::vector<int>* yi_);
+    void setZ(float zf_);
+    void setZ(int zi_);
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();

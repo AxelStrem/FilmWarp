@@ -1,164 +1,107 @@
 #include "stdafx.h"
 #include "Expression3V.h"
 #include "Video.h"
+#include "StringParser.h"
 
 using namespace std;
 using namespace cv;
 
-struct ParseError
+template<class T> std::vector<T> evaluate(std::unique_ptr<Expression3V>& pExpr)
 {
-    std::string message;
-};
+    return pExpr->evaluateI();
+}
 
-std::unique_ptr<Expression3V> parseExpression(std::string expr);
-
-std::unique_ptr<Expression3V> readBrackets(std::string& expr)
+template<> std::vector<float> evaluate(std::unique_ptr<Expression3V>& pExpr)
 {
-    int cb = 1;
-    int bcount = 1;
-    do
-    {
-        if (cb >= expr.size())
+    return pExpr->evaluateF();
+}
+
+template<class XT, class YT, class ZT>
+void process3(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
+{
+    Mat frame;
+    input.getFrame(0).copyTo(frame);
+
+    int pixel_amount = input.width() * input.height();
+    std::vector<std::common_type<XT,YT>::type> coord_x(pixel_amount), coord_y(pixel_amount);
+
+    for (int i = 0; i < input.height(); i++)
+        for (int j = 0; j < input.width(); j++)
         {
-            throw ParseError{ "Parsing error: ill-formed bracket structure" };
+            coord_x[i*input.width() + j] = j;
+            coord_y[i*input.width() + j] = i;
         }
-        if (expr[cb] == '(')
-            bcount++;
-        if (expr[cb] == ')')
-            bcount--;
-        cb++;
-    } while (bcount != 0);
-    string in_brackets = expr.substr(1, cb - 2);
-    expr = expr.substr(cb);
-    return parseExpression(in_brackets);
-}
 
-std::unique_ptr<Expression3V> readNumber(std::string& expr)
-{
-    int num = 0;
-    while (expr[0] >= '0'&& expr[0] <= '9')
+    for (auto &expr : coord_exprs)
     {
-        num = num * 10 + (expr[0] - '0');
-        expr = expr.substr(1);
+        expr->setVars(&coord_x, &coord_y);
     }
 
-    if (expr[0] != '.')
-        return make_unique<EConstI>(num);
-
-    expr = expr.substr(1);
-
-    float fract = 1.f;
-    while (expr[0] >= '0'&& expr[0] <= '9')
+    for (long long f = 0; f < input.framecount(); f++)
     {
-        num = num * 10 + (expr[0] - '0');
-        fract *= 10.f;
-        expr = expr.substr(1);
-    }
+        ZT ft = f;
+        for (auto &expr : coord_exprs)
+        {
+            expr->setZ(ft);
+        }
 
-    return make_unique<EConstF>(num/fract);
-}
+        std::vector<std::common_type<XT, YT>::type> xvals = evaluate<std::common_type<XT, YT>::type>(coord_exprs[0]);
+        std::vector<std::common_type<XT, YT>::type> yvals = evaluate<std::common_type<XT, YT>::type>(coord_exprs[1]);
+        std::vector<ZT>                             zvals = evaluate<ZT>(coord_exprs[2]);
 
-std::unique_ptr<Expression3V> readTerm(std::string& expr)
-{
-    if (expr[0] == '(')
-        return readBrackets(expr);
-      
-    if (expr[0] == '+')
-    {
-        expr = expr.substr(1);
-        return readTerm(expr);
-    }
+        int offset = 0;
 
-    if (expr[0] == '-')
-    {
-        expr = expr.substr(1);
-        unique_ptr<Expression3V> ptr = make_unique<EScaleI>(-1);
-        ptr->addChild(readTerm(expr));
-        return move(ptr);
-    }
+        for (int i = 0; i < input.height(); ++i)
+            for (int j = 0; j < input.width(); ++j)
+            {
+                unsigned char* ptr = frame.data + frame.step[0] * i + frame.step[1] * j;
+                Color8 c = compress(input.pixel(xvals[offset], yvals[offset], zvals[offset]));
+                offset++;
+                ptr[0] = c.r;
+                ptr[1] = c.g;
+                ptr[2] = c.b;
+            }
 
-    if (expr[0] == 'x')
-    {
-        expr = expr.substr(1);
-        return make_unique<EVarX>();
-    }
-
-    if (expr[0] == 'y')
-    {
-        expr = expr.substr(1);
-        return make_unique<EVarY>();
-    }
-
-    if ((expr[0] == 'z')||(expr[0]=='t'))
-    {
-        expr = expr.substr(1);
-        return make_unique<EVarZ>();
-    }
-
-    if ((expr[0] >= '0') && (expr[0] <= '9'))
-        return readNumber(expr);
-
-    throw ParseError{ "Parsing error: unknown symbol" };
-}
-
-
-std::unique_ptr<Expression3V> readOperator(std::string& expr)
-{
-    if (expr[0] == '+')
-    {
-        expr = expr.substr(1);
-        return make_unique<ESum>();
+        dest << frame;
     }
 }
 
-int operatorPriority(char c)
+template<class XT, class YT>
+void process2(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
 {
-    switch (c)
+    if (coord_exprs[2]->isPrecise())
     {
-    case '+': return 1;
-    case '-': return 1;
-    case '*': return 2;
-    case '/': return 2;
-    case '%': return 2;
-    case '^': return 3;
+        process3<XT, YT, int>(input, dest, coord_exprs);
     }
-    return -1;
+    else
+    {
+        process3<XT, YT, float>(input, dest, coord_exprs);
+    }
 }
 
-std::unique_ptr<Expression3V> parseExpressionRanked(std::string &expr, int priority)
+template<class XT>
+void process1(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
 {
-    std::unique_ptr<Expression3V> output;
-
-    output = (priority<3)?parseExpressionRanked(expr,priority+1):readTerm(expr);
-
-    if (expr.empty()||(operatorPriority(expr[0])<priority))
-        return move(output);
-
-    std::unique_ptr<Expression3V> tmp = move(output);
-    
-    switch (priority)
+    if (coord_exprs[1]->isPrecise())
     {
-    case 1:  output = make_unique<ESum>(); break;
-    case 2:  output = make_unique<EMult>(); break;
-    case 3:  output = make_unique<EMult>(); break;
+        process2<XT, int>(input, dest, coord_exprs);
     }
-   
-    output->addChild(move(tmp));
-    
-    while (!expr.empty() && (operatorPriority(expr[0]) == priority))
+    else
     {
-        if (expr[0] != '-')
-            expr = expr.substr(1);
-
-        output->addChild(parseExpressionRanked(expr, priority + 1));
+        process2<XT, float>(input, dest, coord_exprs);
     }
-
-    return output;
 }
 
-std::unique_ptr<Expression3V> parseExpression(std::string expr)
+void process(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
 {
-    return parseExpressionRanked(expr, 1);
+    if (coord_exprs[0]->isPrecise())
+    {
+        process1<int>(input, dest, coord_exprs);
+    }
+    else
+    {
+        process1<float>(input, dest, coord_exprs);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -168,9 +111,7 @@ int main(int argc, char *argv[])
     const string destReference = argv[2];
     const string expression = argv[3];
 
-    Video input(sourceReference);
-    
-    
+    Video input(sourceReference);   
     
     VideoWriter dest(destReference, input.fourcc(), input.fps(), cv::Size(input.width(), input.height()), true);
     if (!dest.isOpened())
@@ -179,20 +120,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    int pixel_amount = input.width() * input.height();
-    std::vector<int> coord_x(pixel_amount), coord_y(pixel_amount);
-
-    for (int i = 0; i < input.height(); i++)
-        for (int j = 0; j < input.width(); j++)
-        {
-            coord_x[i*input.width() + j] = j;
-            coord_y[i*input.width() + j] = i;
-        }
-
-
-    auto tst = parseExpression(expression);
-
-    std::array<std::unique_ptr<Expression3V>, 3> coord_exprs{ move(tst), make_unique<EVarY>(), make_unique<EVarZ>() };
+    std::array<std::unique_ptr<Expression3V>, 3> coord_exprs = parseExprTriplet(expression);
 
     auto x_clamp = make_unique<EClampI>(0, input.width()-1);
     auto y_clamp = make_unique<EClampI>(0, input.height()-1);
@@ -209,40 +137,7 @@ int main(int argc, char *argv[])
 
     input.loadFrame(0, input.framecount());
 
-    Mat frame;
-    input.getFrame(0).copyTo(frame);
-
-    for(auto &expr : coord_exprs)
-    {
-        expr->setIVars(&coord_x, &coord_y);
-    }
-
-    for (long long f = 0; f < input.framecount(); f++)
-    {
-        for (auto &expr : coord_exprs)
-        {
-            expr->setIZ(f);
-        }
-
-        std::vector<int> xvals = coord_exprs[0]->evaluateI();
-        std::vector<int> yvals = coord_exprs[1]->evaluateI();
-        std::vector<int> zvals = coord_exprs[2]->evaluateI();
-
-        int offset = 0;
-
-        for (int i = 0; i < input.height(); ++i)
-            for (int j = 0; j < input.width(); ++j)
-            {
-                unsigned char* ptr = frame.data + frame.step[0] * i + frame.step[1] * j;
-                Color8 c = input.pixel(xvals[offset], yvals[offset], static_cast<long long>(zvals[offset]));
-                offset++;
-                ptr[0] = c.r;
-                ptr[1] = c.g;
-                ptr[2] = c.b;
-            }
-
-        dest << frame;
-    }
+    process(input, dest, coord_exprs);
 
     return 0;
 }

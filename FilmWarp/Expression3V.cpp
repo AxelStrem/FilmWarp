@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "Expression3V.h"
 
-Expression3V::Expression3V() : xf(nullptr), yf(nullptr), xi(nullptr), yi(nullptr), zf(0.0), zi(0) {}
+Expression3V::Expression3V() : xf(nullptr), yf(nullptr), xi(nullptr), yi(nullptr), zf(0.0), zi(0), width(0) {}
 
 bool Expression3V::isPrecise() const { return true; }
 
@@ -11,32 +11,34 @@ void Expression3V::addChild(std::unique_ptr<Expression3V> pC)
     pChildren.push_back(std::move(pC));
 }
 
-void Expression3V::setFVars(std::vector<float>* xf_, std::vector<float>* yf_)
+void Expression3V::setVars(std::vector<float>* xf_, std::vector<float>* yf_)
 {
     xf = xf_; yf = yf_;
+    width = yf_->size();
     for (auto& p : pChildren)
-        p->setFVars(xf_, yf_);
+        p->setVars(xf_, yf_);
 }
 
-void Expression3V::setIVars(std::vector<int>* xi_, std::vector<int>* yi_)
+void Expression3V::setVars(std::vector<int>* xi_, std::vector<int>* yi_)
 {
     xi = xi_; yi = yi_;
+    width = yi_->size();
     for (auto& p : pChildren)
-        p->setIVars(xi_, yi_);
+        p->setVars(xi_, yi_);
 }
 
-void Expression3V::setFZ(double zf_)
+void Expression3V::setZ(float zf_)
 {
     zf = zf_;
     for (auto& p : pChildren)
-        p->setFZ(zf_);
+        p->setZ(zf_);
 }
 
-void Expression3V::setIZ(long long zi_)
+void Expression3V::setZ(int zi_)
 {
     zi = zi_;
     for (auto& p : pChildren)
-        p->setIZ(zi_);
+        p->setZ(zi_);
 }
 
 float Expression3V::priority() const
@@ -44,8 +46,8 @@ float Expression3V::priority() const
     return 0.f;
 }
 
-std::vector<float> Expression3V::evaluateF() { return std::vector<float>(xf->size()); }
-std::vector<int> Expression3V::evaluateI() { return std::vector<int>(xi->size()); }
+std::vector<float> Expression3V::evaluateF() { return std::vector<float>(width); }
+std::vector<int> Expression3V::evaluateI() { return std::vector<int>(width); }
 
 
 bool EVarX::isPrecise() const { return true; }
@@ -60,8 +62,8 @@ std::vector<int> EVarY::evaluateI() { return *yi; }
 
 bool EVarZ::isPrecise() const { return true; }
 
-std::vector<float> EVarZ::evaluateF() { return std::vector<float>(xf->size(), zf); }
-std::vector<int> EVarZ::evaluateI() { return std::vector<int>(xi->size(), zi); }
+std::vector<float> EVarZ::evaluateF() { return std::vector<float>(width, zf); }
+std::vector<int> EVarZ::evaluateI() { return std::vector<int>(width, zi); }
 
 bool ESum::isPrecise() const
 {
