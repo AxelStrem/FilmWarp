@@ -33,6 +33,31 @@ std::unique_ptr<Expression3V> readBrackets(std::string& expr)
     return parseExpression(in_brackets);
 }
 
+std::unique_ptr<Expression3V> readNumber(std::string& expr)
+{
+    int num = 0;
+    while (expr[0] >= '0'&& expr[0] <= '9')
+    {
+        num = num * 10 + (expr[0] - '0');
+        expr = expr.substr(1);
+    }
+
+    if (expr[0] != '.')
+        return make_unique<EConstI>(num);
+
+    expr = expr.substr(1);
+
+    float fract = 1.f;
+    while (expr[0] >= '0'&& expr[0] <= '9')
+    {
+        num = num * 10 + (expr[0] - '0');
+        fract *= 10.f;
+        expr = expr.substr(1);
+    }
+
+    return make_unique<EConstF>(num/fract);
+}
+
 std::unique_ptr<Expression3V> readTerm(std::string& expr)
 {
     if (expr[0] == '(')
@@ -70,6 +95,9 @@ std::unique_ptr<Expression3V> readTerm(std::string& expr)
         return make_unique<EVarZ>();
     }
 
+    if ((expr[0] >= '0') && (expr[0] <= '9'))
+        return readNumber(expr);
+
     throw ParseError{ "Parsing error: unknown symbol" };
 }
 
@@ -91,6 +119,7 @@ int operatorPriority(char c)
     case '-': return 1;
     case '*': return 2;
     case '/': return 2;
+    case '%': return 2;
     case '^': return 3;
     }
     return -1;
@@ -110,8 +139,8 @@ std::unique_ptr<Expression3V> parseExpressionRanked(std::string &expr, int prior
     switch (priority)
     {
     case 1:  output = make_unique<ESum>(); break;
-    case 2:  output = make_unique<ESum>(); break;
-    case 3:  output = make_unique<ESum>(); break;
+    case 2:  output = make_unique<EMult>(); break;
+    case 3:  output = make_unique<EMult>(); break;
     }
    
     output->addChild(move(tmp));

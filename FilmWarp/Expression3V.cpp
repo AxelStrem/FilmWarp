@@ -218,3 +218,36 @@ std::vector<int> EClampI::evaluateI()
     }
     return vec;
 }
+
+bool EMult::isPrecise() const
+{
+    return std::all_of(pChildren.begin(), pChildren.end(), [](auto& ptr) { return ptr->isPrecise(); });
+}
+
+std::vector<float> EMult::evaluateF()
+{
+    auto vec = pChildren[0]->evaluateF();
+    for (auto it = pChildren.begin() + 1; it != pChildren.end(); ++it)
+    {
+        auto vmul = (*it)->evaluateF();
+        for (int i = 0; i < vec.size(); i++)
+        {
+            vec[i] *= vmul[i];
+        }
+    }
+    return vec;
+}
+
+std::vector<int> EMult::evaluateI()
+{
+    auto vec = pChildren[0]->evaluateI();
+    for (auto it = pChildren.begin() + 1; it != pChildren.end(); ++it)
+    {
+        auto vmul = (*it)->evaluateI();
+        for (int i = 0; i < vec.size(); i++)
+        {
+            vec[i] *= vmul[i];
+        }
+    }
+    return vec;
+}
