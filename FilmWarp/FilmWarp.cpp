@@ -40,7 +40,7 @@ void process3(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expres
         expr->setVars(&coord_x, &coord_y);
         expr->setVars(&coord_xf, &coord_yf);
     }
-
+//D:\media\videos\SuomiBikes - 2\MAH01674.MP4
     for (int f = 0; f < input.framecount(); f++)
     {
         float ft = f;
@@ -127,6 +127,8 @@ int main(int argc, char *argv[])
 
     std::array<std::unique_ptr<Expression3V>, 3> coord_exprs = parseExprTriplet(expression);
 
+    input.loadFrame(0, input.framecount());
+
     auto x_clamp = make_unique<EClampI>(0, input.width()-1);
     auto y_clamp = make_unique<EClampI>(0, input.height()-1);
     auto z_clamp = make_unique<EClampI>(0, input.framecount()-1);
@@ -138,9 +140,6 @@ int main(int argc, char *argv[])
     coord_exprs[0] = move(x_clamp);
     coord_exprs[1] = move(y_clamp);
     coord_exprs[2] = move(z_clamp);
-
-
-    input.loadFrame(0, input.framecount());
 
     process(input, dest, coord_exprs);
 

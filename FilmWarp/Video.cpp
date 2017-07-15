@@ -43,6 +43,10 @@ void Video::rewind()
 void Video::readFrame()
 {
     source >> cached_frames[current_frame++];
+    if (cached_frames[current_frame - 1].empty())
+    {
+        frame_count = std::min(frame_count,current_frame-1);
+    }
 }
 
 bool Video::isCached(int frame)
@@ -98,7 +102,7 @@ void Video::loadFrame(int from, int to)
     while (current_frame < from)
         skipFrame();
 
-    while (current_frame < to)
+    while (current_frame <= to)
         readFrame();
 }
 
