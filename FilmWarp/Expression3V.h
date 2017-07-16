@@ -20,6 +20,7 @@ public:
     virtual float priority() const;
 
     void addChild(std::unique_ptr<Expression3V> pC);
+    std::unique_ptr<Expression3V> popChild();
 
     void setVars(std::vector<float>* xf_, std::vector<float>* yf_);
     void setVars(std::vector<int>* xi_, std::vector<int>* yi_);
@@ -69,6 +70,23 @@ public:
 };
 
 class EMult : public Expression3V
+{
+public:
+    virtual bool isPrecise() const;
+
+    virtual std::vector<float> evaluateF();
+    virtual std::vector<int> evaluateI();
+};
+
+class EDiv : public Expression3V
+{
+public:
+    virtual bool isPrecise() const;
+
+    virtual std::vector<float> evaluateF();
+};
+
+class EMod : public Expression3V
 {
 public:
     virtual bool isPrecise() const;

@@ -11,6 +11,13 @@ void Expression3V::addChild(std::unique_ptr<Expression3V> pC)
     pChildren.push_back(std::move(pC));
 }
 
+std::unique_ptr<Expression3V> Expression3V::popChild()
+{
+    auto r = move(pChildren.back());
+    pChildren.pop_back();
+    return r;
+}
+
 void Expression3V::setVars(std::vector<float>* xf_, std::vector<float>* yf_)
 {
     xf = xf_; yf = yf_;
@@ -250,6 +257,50 @@ std::vector<int> EMult::evaluateI()
         {
             vec[i] *= vmul[i];
         }
+    }
+    return vec;
+}
+
+bool EMod::isPrecise() const
+{
+    return std::all_of(pChildren.begin(), pChildren.end(), [](auto& ptr) { return ptr->isPrecise(); });
+}
+
+std::vector<float> EMod::evaluateF()
+{
+    auto vec = pChildren[0]->evaluateF();
+    auto vop = pChildren[1]->evaluateF();
+    for (int i = 0; i < vec.size(); i++)
+    {
+        float dv = vec[i] / vop[i];
+        vec[i] = vec[i] - floor(dv)*vop[i];
+    }
+    return vec;
+}
+
+std::vector<int> EMod::evaluateI()
+{
+    auto vec = pChildren[0]->evaluateI();
+    auto vop = pChildren[1]->evaluateI();
+    for (int i = 0; i < vec.size(); i++)
+    {
+        vec[i] %= vop[i];
+    }
+    return vec;
+}
+
+bool EDiv::isPrecise() const
+{
+    return false;
+}
+
+std::vector<float> EDiv::evaluateF()
+{
+    auto vec = pChildren[0]->evaluateF();
+    auto vop = pChildren[1]->evaluateF();
+    for (int i = 0; i < vec.size(); i++)
+    {
+        vec[i] /= vop[i];
     }
     return vec;
 }

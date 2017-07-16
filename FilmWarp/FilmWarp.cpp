@@ -40,7 +40,7 @@ void process3(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expres
         expr->setVars(&coord_x, &coord_y);
         expr->setVars(&coord_xf, &coord_yf);
     }
-//D:\media\videos\SuomiBikes - 2\MAH01674.MP4
+
     for (int f = 0; f < input.framecount(); f++)
     {
         float ft = f;

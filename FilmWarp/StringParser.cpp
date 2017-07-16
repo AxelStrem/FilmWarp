@@ -112,10 +112,24 @@ int operatorPriority(char c)
     case '-': return 1;
     case '*': return 2;
     case '/': return 2;
-    case '%': return 2;
+    case '#': return 2;
     case '^': return 3;
     }
     return -1;
+}
+
+std::unique_ptr<Expression3V> formBinaryOp(char op, std::unique_ptr<Expression3V> c1, std::unique_ptr<Expression3V> c2)
+{
+    std::unique_ptr<Expression3V> result;
+    switch (op)
+    {
+        case '/': result = make_unique<EDiv>(); break;
+        case '#': result = make_unique<EMod>(); break;
+    }
+
+    result->addChild(move(c1));
+    result->addChild(move(c2));
+    return move(result);
 }
 
 std::unique_ptr<Expression3V> parseExpressionRanked(std::string &expr, int priority)
@@ -140,10 +154,21 @@ std::unique_ptr<Expression3V> parseExpressionRanked(std::string &expr, int prior
 
     while (!expr.empty() && (operatorPriority(expr[0]) == priority))
     {
-        if (expr[0] != '-')
+        if ((expr[0] == '/')||(expr[0]=='#'))
+        {
+            char c = expr[0];
             expr = expr.substr(1);
+            auto c1 = output->popChild();
+            auto c2 = parseExpressionRanked(expr, priority + 1);
+            output->addChild(formBinaryOp(c, move(c1), move(c2)));
+        }
+        else
+        {
+            if (expr[0] != '-')
+                expr = expr.substr(1);
 
-        output->addChild(parseExpressionRanked(expr, priority + 1));
+            output->addChild(parseExpressionRanked(expr, priority + 1));
+        }
     }
 
     return output;
