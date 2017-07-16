@@ -6,6 +6,48 @@
 using namespace std;
 using namespace cv;
 
+class Recorder
+{
+public:
+    virtual void pushFrame(cv::Mat& frame) = 0;
+    virtual cv::Mat getSampleFrame() = 0;
+};
+
+class VideoRecorder : public Recorder
+{
+    cv::VideoWriter dest;
+    
+    cv::Size resolution;
+    double target_fps;
+    int frame_count;
+    int codec_fourcc;
+public:
+    VideoRecorder(std::string filename, int fourcc, double fps, cv::Size res, int target_framecount)
+    : dest(filename, fourcc, fps, res, true), resolution(res), target_fps(fps), frame_count(target_framecount)
+    {
+        if (!dest.isOpened())
+        {
+            throw IOError{ "Could not open output file" };
+        }
+    }
+
+    virtual void pushFrame(cv::Mat& frame)
+    {
+        dest << frame;
+    }
+
+    int width() { return resolution.width; }
+    int height() { return resolution.height; }
+    double fps() { return target_fps; }
+    int framecount() { return frame_count; }
+    int fourcc() { return codec_fourcc; }
+
+    virtual cv::Mat getSampleFrame()
+    {
+        return cv::Mat(resolution, CV_8UC3);
+    }
+};
+
 template<class T> std::vector<T> evaluate(std::unique_ptr<Expression3V>& pExpr)
 {
     return pExpr->evaluateI();
@@ -16,23 +58,34 @@ template<> std::vector<float> evaluate(std::unique_ptr<Expression3V>& pExpr)
     return pExpr->evaluateF();
 }
 
-template<class XT, class YT, class ZT>
-void process3(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
+template<class F> void apply_result(std::unique_ptr<Expression3V>& pExpr, F func)
 {
-    Mat frame;
-    input.getFrame(0).copyTo(frame);
+    if (pExpr->isPrecise())
+    {
+        func(pExpr->evaluateI());
+    }
+    else
+    {
+        func(pExpr->evaluateF());
+    }
+}
 
-    int pixel_amount = input.width() * input.height();
+template<class XT, class YT, class ZT>
+void process3(Video& input, VideoRecorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
+{
+    Mat frame = dest.getSampleFrame();
+
+    int pixel_amount = dest.width() * dest.height();
     std::vector<int> coord_x(pixel_amount), coord_y(pixel_amount);
     std::vector<float> coord_xf(pixel_amount), coord_yf(pixel_amount);
 
-    for (int i = 0; i < input.height(); i++)
-        for (int j = 0; j < input.width(); j++)
+    for (int i = 0; i < dest.height(); i++)
+        for (int j = 0; j < dest.width(); j++)
         {
-            coord_x[i*input.width() + j] = j;
-            coord_y[i*input.width() + j] = i;
-            coord_xf[i*input.width() + j] = static_cast<float>(j);
-            coord_yf[i*input.width() + j] = static_cast<float>(i);
+            coord_x[i*dest.width() + j] = j;
+            coord_y[i*dest.width() + j] = i;
+            coord_xf[i*dest.width() + j] = static_cast<float>(j);
+            coord_yf[i*dest.width() + j] = static_cast<float>(i);
         }
 
     for (auto &expr : coord_exprs)
@@ -41,7 +94,7 @@ void process3(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expres
         expr->setVars(&coord_xf, &coord_yf);
     }
 
-    for (int f = 0; f < input.framecount(); f++)
+    for (int f = 0; f < dest.framecount(); f++)
     {
         float ft = static_cast<float>(f);
         for (auto &expr : coord_exprs)
@@ -56,8 +109,8 @@ void process3(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expres
 
         int offset = 0;
 
-        for (int i = 0; i < input.height(); ++i)
-            for (int j = 0; j < input.width(); ++j)
+        for (int i = 0; i < dest.height(); ++i)
+            for (int j = 0; j < dest.width(); ++j)
             {
                 unsigned char* ptr = frame.data + frame.step[0] * i + frame.step[1] * j;
                 Color8 c = compress(input.pixel(xvals[offset], yvals[offset], zvals[offset]));
@@ -67,12 +120,12 @@ void process3(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expres
                 ptr[2] = c.b;
             }
 
-        dest << frame;
+        dest.pushFrame(frame);
     }
 }
 
 template<class XT, class YT>
-void process2(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
+void process2(Video& input, VideoRecorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
 {
     if (coord_exprs[2]->isPrecise())
     {
@@ -85,7 +138,7 @@ void process2(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expres
 }
 
 template<class XT>
-void process1(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
+void process1(Video& input, VideoRecorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
 {
     if (coord_exprs[1]->isPrecise())
     {
@@ -97,7 +150,7 @@ void process1(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expres
     }
 }
 
-void process(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
+void process(Video& input, VideoRecorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
 {
     if (coord_exprs[0]->isPrecise())
     {
@@ -116,18 +169,48 @@ int main(int argc, char *argv[])
     const string destReference = argv[2];
     const string expression = argv[3];
 
-    Video input(sourceReference);   
-    
-    VideoWriter dest(destReference, input.fourcc(), input.fps(), cv::Size(input.width(), input.height()), true);
-    if (!dest.isOpened())
+    map<string, string> params;
+
+    for (int a = 4; a < argc; a++)
     {
-        cout << "Could not open output file" << endl;
-        return -1;
+        string param = argv[a];
+        if (!param.empty() && param[0] == '-')
+        {
+            int spl = param.find('=');
+            params[param.substr(1, spl - 1)] = param.substr(spl + 1);
+        }
     }
+
+    Video input(sourceReference);   
+
+    int out_w  = input.width();
+    int out_h  = input.height();
+    int out_fc = input.framecount();
+    double out_fps = input.fps();
 
     StringParser sp;
     sp.setConsts(input.width(), input.height(), input.framecount());
 
+    if (params.find("s") != params.end())
+    {
+        auto sz_exprs = sp.parseExprTriplet(params["s"]);
+        std::vector<int> nvec_i{ 0 };
+        std::vector<float> nvec_f{ 0.f };
+        for (auto& pExpr : sz_exprs)
+        {
+            pExpr->setVars(&nvec_i, &nvec_i);
+            pExpr->setVars(&nvec_f, &nvec_f);
+            pExpr->setZ(0);
+            pExpr->setZ(0.f);
+        }
+
+        apply_result(sz_exprs[0], [&out_w](auto vec) { out_w = vec[0]; });
+        apply_result(sz_exprs[1], [&out_h](auto vec) { out_h = vec[0]; });
+        apply_result(sz_exprs[2], [&out_fc](auto vec) { out_fc = vec[0]; });
+    }
+    
+    VideoRecorder dest(destReference, input.fourcc(), out_fps, cv::Size(out_w, out_h), out_fc);
+    
     std::array<std::unique_ptr<Expression3V>, 3> coord_exprs = sp.parseExprTriplet(expression);
 
     input.loadFrame(0, input.framecount());
