@@ -8,8 +8,8 @@ protected:
     std::vector<float>* yf;
     std::vector<int>*   xi;
     std::vector<int>*   yi;
-    double              zf;
-    long long           zi;
+    float               zf;
+    int                 zi;
     int width;
 
     std::vector<std::unique_ptr<Expression3V>> pChildren;
@@ -114,7 +114,6 @@ public:
     virtual bool isPrecise() const;
 
     virtual std::vector<float> evaluateF();
-    virtual std::vector<int> evaluateI();
 };
 
 

@@ -21,7 +21,7 @@ std::unique_ptr<Expression3V> Expression3V::popChild()
 void Expression3V::setVars(std::vector<float>* xf_, std::vector<float>* yf_)
 {
     xf = xf_; yf = yf_;
-    width = yf_->size();
+    width = static_cast<int>(yf_->size());
     for (auto& p : pChildren)
         p->setVars(xf_, yf_);
 }
@@ -29,7 +29,7 @@ void Expression3V::setVars(std::vector<float>* xf_, std::vector<float>* yf_)
 void Expression3V::setVars(std::vector<int>* xi_, std::vector<int>* yi_)
 {
     xi = xi_; yi = yi_;
-    width = yi_->size();
+    width = static_cast<int>(yi_->size());
     for (auto& p : pChildren)
         p->setVars(xi_, yi_);
 }
@@ -154,17 +154,7 @@ std::vector<float> EScaleF::evaluateF()
     return vec;
 }
 
-std::vector<int> EScaleF::evaluateI()
-{
-    auto vec = pChildren[0]->evaluateI();
-    for (int i = 0; i < vec.size(); i++)
-    {
-        vec[i] *= coef;
-    }
-    return vec;
-}
-
-EConstI::EConstI(int c) : value(c), value_f(c) {}
+EConstI::EConstI(int c) : value(c), value_f(static_cast<float>(c)) {}
 
 bool EConstI::isPrecise() const
 {
@@ -213,7 +203,7 @@ std::vector<float> EClampI::evaluateF()
     auto vec = pChildren[0]->evaluateF();
     for (int i = 0; i < vec.size(); i++)
     {
-        vec[i] = clamp<float>(vec[i],low,high);
+        vec[i] = clamp<float>(vec[i], static_cast<float>(low), static_cast<float>(high));
     }
     return vec;
 }
@@ -223,7 +213,7 @@ std::vector<int> EClampI::evaluateI()
     auto vec = pChildren[0]->evaluateI();
     for (int i = 0; i < vec.size(); i++)
     {
-        vec[i] = clamp<float>(vec[i], low, high);
+        vec[i] = clamp<int>(vec[i], low, high);
     }
     return vec;
 }

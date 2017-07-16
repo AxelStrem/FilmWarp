@@ -202,8 +202,8 @@ std::array<std::unique_ptr<Expression3V>, 3> StringParser::parseExprTriplet(std:
     if ((expr[0] != '[') || (expr.back() != ']'))
         throw ParseError{ "Parsing error: ill-formed expression" };
 
-    int f1 = expr.find(';');
-    int f2 = expr.find(';', f1 + 1);
+    int f1 = static_cast<int>(expr.find(';'));
+    int f2 = static_cast<int>(expr.find(';', f1 + 1));
 
     std::array<std::unique_ptr<Expression3V>, 3> result;
 

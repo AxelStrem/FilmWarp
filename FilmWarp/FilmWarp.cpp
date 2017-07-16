@@ -31,8 +31,8 @@ void process3(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expres
         {
             coord_x[i*input.width() + j] = j;
             coord_y[i*input.width() + j] = i;
-            coord_xf[i*input.width() + j] = j;
-            coord_yf[i*input.width() + j] = i;
+            coord_xf[i*input.width() + j] = static_cast<float>(j);
+            coord_yf[i*input.width() + j] = static_cast<float>(i);
         }
 
     for (auto &expr : coord_exprs)
@@ -43,7 +43,7 @@ void process3(Video& input, VideoWriter& dest, std::array<std::unique_ptr<Expres
 
     for (int f = 0; f < input.framecount(); f++)
     {
-        float ft = f;
+        float ft = static_cast<float>(f);
         for (auto &expr : coord_exprs)
         {
             expr->setZ(f);
