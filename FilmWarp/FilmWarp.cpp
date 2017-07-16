@@ -8,22 +8,33 @@ using namespace cv;
 
 class Recorder
 {
-public:
-    virtual void pushFrame(cv::Mat& frame) = 0;
-    virtual cv::Mat getSampleFrame() = 0;
-};
-
-class VideoRecorder : public Recorder
-{
-    cv::VideoWriter dest;
-    
     cv::Size resolution;
     double target_fps;
     int frame_count;
     int codec_fourcc;
 public:
+    Recorder(int fourcc, double fps, cv::Size res, int target_framecount)
+        : resolution(res), target_fps(fps), frame_count(target_framecount), codec_fourcc(fourcc)
+    {}
+
+    virtual void pushFrame(cv::Mat& frame) = 0;
+    virtual cv::Mat getSampleFrame() = 0;
+
+    int width() { return resolution.width; }
+    int height() { return resolution.height; }
+    double fps() { return target_fps; }
+    int framecount() { return frame_count; }
+    int fourcc() { return codec_fourcc; }
+
+    virtual ~Recorder() {}
+};
+
+class VideoRecorder : public Recorder
+{
+    cv::VideoWriter dest;
+public:
     VideoRecorder(std::string filename, int fourcc, double fps, cv::Size res, int target_framecount)
-    : dest(filename, fourcc, fps, res, true), resolution(res), target_fps(fps), frame_count(target_framecount)
+    : Recorder(fourcc, fps, res, target_framecount), dest(filename, fourcc, fps, res, true)
     {
         if (!dest.isOpened())
         {
@@ -36,15 +47,37 @@ public:
         dest << frame;
     }
 
-    int width() { return resolution.width; }
-    int height() { return resolution.height; }
-    double fps() { return target_fps; }
-    int framecount() { return frame_count; }
-    int fourcc() { return codec_fourcc; }
+    virtual cv::Mat getSampleFrame()
+    {
+        return cv::Mat(cv::Size(width(),height()), CV_8UC3);
+    }
+};
+
+class ImageRecorder : public Recorder
+{
+    cv::Mat data;
+    std::string fname;
+public:
+    ImageRecorder(std::string filename, cv::Size res)
+        : Recorder(0, 0.0, res, 1), fname(filename)
+    {
+
+    }
+
+    virtual void pushFrame(cv::Mat& frame)
+    {
+        frame.copyTo(data);
+    }
 
     virtual cv::Mat getSampleFrame()
     {
-        return cv::Mat(resolution, CV_8UC3);
+        return cv::Mat(cv::Size(width(), height()), CV_8UC3);
+    }
+
+    virtual ~ImageRecorder()
+    {
+        cv::InputArray res(data);
+        cv::imwrite(fname, res);
     }
 };
 
@@ -71,7 +104,7 @@ template<class F> void apply_result(std::unique_ptr<Expression3V>& pExpr, F func
 }
 
 template<class XT, class YT, class ZT>
-void process3(Video& input, VideoRecorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
+void process3(Video& input, Recorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
 {
     Mat frame = dest.getSampleFrame();
 
@@ -125,7 +158,7 @@ void process3(Video& input, VideoRecorder& dest, std::array<std::unique_ptr<Expr
 }
 
 template<class XT, class YT>
-void process2(Video& input, VideoRecorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
+void process2(Video& input, Recorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
 {
     if (coord_exprs[2]->isPrecise())
     {
@@ -138,7 +171,7 @@ void process2(Video& input, VideoRecorder& dest, std::array<std::unique_ptr<Expr
 }
 
 template<class XT>
-void process1(Video& input, VideoRecorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
+void process1(Video& input, Recorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
 {
     if (coord_exprs[1]->isPrecise())
     {
@@ -150,7 +183,7 @@ void process1(Video& input, VideoRecorder& dest, std::array<std::unique_ptr<Expr
     }
 }
 
-void process(Video& input, VideoRecorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
+void process(Video& input, Recorder& dest, std::array<std::unique_ptr<Expression3V>, 3>& coord_exprs)
 {
     if (coord_exprs[0]->isPrecise())
     {
@@ -209,7 +242,9 @@ int main(int argc, char *argv[])
         apply_result(sz_exprs[2], [&out_fc](auto vec) { out_fc = vec[0]; });
     }
     
-    VideoRecorder dest(destReference, input.fourcc(), out_fps, cv::Size(out_w, out_h), out_fc);
+    std::unique_ptr<Recorder> dest = (out_fc>1)
+        ? std::unique_ptr<Recorder>(make_unique<VideoRecorder>(destReference, input.fourcc(), out_fps, cv::Size(out_w, out_h), out_fc))
+        : std::unique_ptr<Recorder>(make_unique<ImageRecorder>(destReference, cv::Size(out_w, out_h)));
     
     std::array<std::unique_ptr<Expression3V>, 3> coord_exprs = sp.parseExprTriplet(expression);
 
@@ -227,7 +262,7 @@ int main(int argc, char *argv[])
     coord_exprs[1] = move(y_clamp);
     coord_exprs[2] = move(z_clamp);
 
-    process(input, dest, coord_exprs);
+    process(input, *dest, coord_exprs);
 
     return 0;
 }

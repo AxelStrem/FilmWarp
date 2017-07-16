@@ -29,6 +29,8 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual ~Expression3V() {}
 };
 
 class EVarX : public Expression3V
