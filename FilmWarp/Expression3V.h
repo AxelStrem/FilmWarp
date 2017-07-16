@@ -121,6 +121,7 @@ public:
 class EConstI : public Expression3V
 {
     int value;
+    float value_f;
 public:
     EConstI(int c);
     virtual bool isPrecise() const;

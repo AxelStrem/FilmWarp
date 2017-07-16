@@ -164,7 +164,7 @@ std::vector<int> EScaleF::evaluateI()
     return vec;
 }
 
-EConstI::EConstI(int c) : value(c) {}
+EConstI::EConstI(int c) : value(c), value_f(c) {}
 
 bool EConstI::isPrecise() const
 {
@@ -173,7 +173,7 @@ bool EConstI::isPrecise() const
 
 std::vector<float> EConstI::evaluateF()
 {
-    return std::vector<float>(width, value);
+    return std::vector<float>(width, value_f);
 }
 
     std::vector<int> EConstI::evaluateI()

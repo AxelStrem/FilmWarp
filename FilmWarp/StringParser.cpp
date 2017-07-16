@@ -5,7 +5,7 @@ using namespace std;
 using namespace cv;
 
 
-std::unique_ptr<Expression3V> readBrackets(std::string& expr)
+std::unique_ptr<Expression3V> StringParser::readBrackets(std::string& expr)
 {
     int cb = 1;
     int bcount = 1;
@@ -26,7 +26,7 @@ std::unique_ptr<Expression3V> readBrackets(std::string& expr)
     return parseExpression(in_brackets);
 }
 
-std::unique_ptr<Expression3V> readNumber(std::string& expr)
+std::unique_ptr<Expression3V> StringParser::readNumber(std::string& expr)
 {
     int num = 0;
     while (expr[0] >= '0'&& expr[0] <= '9')
@@ -51,7 +51,7 @@ std::unique_ptr<Expression3V> readNumber(std::string& expr)
     return make_unique<EConstF>(num / fract);
 }
 
-std::unique_ptr<Expression3V> readTerm(std::string& expr)
+std::unique_ptr<Expression3V> StringParser::readTerm(std::string& expr)
 {
     if (expr[0] == '(')
         return readBrackets(expr);
@@ -88,6 +88,24 @@ std::unique_ptr<Expression3V> readTerm(std::string& expr)
         return make_unique<EVarZ>();
     }
 
+    if (expr[0] == 'h')
+    {
+        expr = expr.substr(1);
+        return make_unique<EConstI>(h);
+    }
+
+    if (expr[0] == 'w')
+    {
+        expr = expr.substr(1);
+        return make_unique<EConstI>(w);
+    }
+
+    if (expr[0] == 'l')
+    {
+        expr = expr.substr(1);
+        return make_unique<EConstI>(l);
+    }
+
     if ((expr[0] >= '0') && (expr[0] <= '9'))
         return readNumber(expr);
 
@@ -95,7 +113,7 @@ std::unique_ptr<Expression3V> readTerm(std::string& expr)
 }
 
 
-std::unique_ptr<Expression3V> readOperator(std::string& expr)
+std::unique_ptr<Expression3V> StringParser::readOperator(std::string& expr)
 {
     if (expr[0] == '+')
     {
@@ -104,7 +122,7 @@ std::unique_ptr<Expression3V> readOperator(std::string& expr)
     }
 }
 
-int operatorPriority(char c)
+int StringParser::operatorPriority(char c)
 {
     switch (c)
     {
@@ -118,7 +136,7 @@ int operatorPriority(char c)
     return -1;
 }
 
-std::unique_ptr<Expression3V> formBinaryOp(char op, std::unique_ptr<Expression3V> c1, std::unique_ptr<Expression3V> c2)
+std::unique_ptr<Expression3V> StringParser::formBinaryOp(char op, std::unique_ptr<Expression3V> c1, std::unique_ptr<Expression3V> c2)
 {
     std::unique_ptr<Expression3V> result;
     switch (op)
@@ -132,7 +150,7 @@ std::unique_ptr<Expression3V> formBinaryOp(char op, std::unique_ptr<Expression3V
     return move(result);
 }
 
-std::unique_ptr<Expression3V> parseExpressionRanked(std::string &expr, int priority)
+std::unique_ptr<Expression3V> StringParser::parseExpressionRanked(std::string &expr, int priority)
 {
     std::unique_ptr<Expression3V> output;
 
@@ -174,12 +192,12 @@ std::unique_ptr<Expression3V> parseExpressionRanked(std::string &expr, int prior
     return output;
 }
 
-std::unique_ptr<Expression3V> parseExpression(std::string expr)
+std::unique_ptr<Expression3V> StringParser::parseExpression(std::string expr)
 {
     return parseExpressionRanked(expr, 1);
 }
 
-std::array<std::unique_ptr<Expression3V>, 3> parseExprTriplet(std::string expr)
+std::array<std::unique_ptr<Expression3V>, 3> StringParser::parseExprTriplet(std::string expr)
 {
     if ((expr[0] != '[') || (expr.back() != ']'))
         throw ParseError{ "Parsing error: ill-formed expression" };
@@ -196,4 +214,11 @@ std::array<std::unique_ptr<Expression3V>, 3> parseExprTriplet(std::string expr)
     result[2] = parseExpression(expr.substr(f2 + 1));
 
     return result;
+}
+
+void StringParser::setConsts(int w_, int h_, int l_)
+{
+    h = h_;
+    w = w_;
+    l = l_;
 }

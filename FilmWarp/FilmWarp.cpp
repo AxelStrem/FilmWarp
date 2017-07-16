@@ -125,7 +125,10 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    std::array<std::unique_ptr<Expression3V>, 3> coord_exprs = parseExprTriplet(expression);
+    StringParser sp;
+    sp.setConsts(input.width(), input.height(), input.framecount());
+
+    std::array<std::unique_ptr<Expression3V>, 3> coord_exprs = sp.parseExprTriplet(expression);
 
     input.loadFrame(0, input.framecount());
 
