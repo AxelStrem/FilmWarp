@@ -95,6 +95,15 @@ public:
     virtual std::vector<int> evaluateI();
 };
 
+class EFloor : public Expression3V
+{
+public:
+    virtual bool isPrecise() const;
+
+    virtual std::vector<float> evaluateF();
+    virtual std::vector<int> evaluateI();
+};
+
 class EScaleI : public Expression3V
 {
     int coef;

@@ -131,6 +131,7 @@ int StringParser::operatorPriority(char c)
     case '*': return 2;
     case '/': return 2;
     case '#': return 2;
+    case '_': return 2;
     case '^': return 3;
     }
     return -1;
@@ -143,6 +144,7 @@ std::unique_ptr<Expression3V> StringParser::formBinaryOp(char op, std::unique_pt
     {
         case '/': result = make_unique<EDiv>(); break;
         case '#': result = make_unique<EMod>(); break;
+        case '_': result = make_unique<EFloor>(); break;
     }
 
     result->addChild(move(c1));
@@ -172,7 +174,7 @@ std::unique_ptr<Expression3V> StringParser::parseExpressionRanked(std::string &e
 
     while (!expr.empty() && (operatorPriority(expr[0]) == priority))
     {
-        if ((expr[0] == '/')||(expr[0]=='#'))
+        if ((expr[0] == '/')||(expr[0]=='#') || (expr[0] == '_'))
         {
             char c = expr[0];
             expr = expr.substr(1);

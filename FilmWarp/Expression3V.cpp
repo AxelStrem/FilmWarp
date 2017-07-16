@@ -294,3 +294,31 @@ std::vector<float> EDiv::evaluateF()
     }
     return vec;
 }
+
+bool EFloor::isPrecise() const
+{
+    return std::all_of(pChildren.begin(), pChildren.end(), [](auto& ptr) { return ptr->isPrecise(); });
+}
+
+std::vector<float> EFloor::evaluateF()
+{
+    auto vec = pChildren[0]->evaluateF();
+    auto vop = pChildren[1]->evaluateF();
+    for (int i = 0; i < vec.size(); i++)
+    {
+        float dv = vec[i] / vop[i];
+        vec[i] = floor(dv)*vop[i];
+    }
+    return vec;
+}
+
+std::vector<int> EFloor::evaluateI()
+{
+    auto vec = pChildren[0]->evaluateI();
+    auto vop = pChildren[1]->evaluateI();
+    for (int i = 0; i < vec.size(); i++)
+    {
+        vec[i] -= vec[i]%vop[i];
+    }
+    return vec;
+}
