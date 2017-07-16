@@ -127,33 +127,51 @@ void process3(Video& input, Recorder& dest, std::array<std::unique_ptr<Expressio
         expr->setVars(&coord_xf, &coord_yf);
     }
 
-    for (int f = 0; f < dest.framecount(); f++)
+    Interval full_x{ 0.f, dest.width() };
+    Interval full_y{ 0.f, dest.height() };
+
+
+    const int bstep = 4;
+    for (int bstart = 0, bend = min(bstep,dest.framecount()); bstart < dest.framecount(); bstart = bend, bend = min(bstart + bstep,dest.framecount()))
     {
-        float ft = static_cast<float>(f);
-        for (auto &expr : coord_exprs)
+        Interval zint{ bstart,bend };
+        auto frame_span = coord_exprs[2]->getImage(full_x, full_y, zint);
+
+        input.loadFrame(static_cast<int>(frame_span.a), static_cast<int>(frame_span.b) + 1);
+
+        for (int f = bstart; f < bend; f++)
         {
-            expr->setZ(f);
-            expr->setZ(ft);
-        }
-
-        std::vector<std::common_type<XT, YT>::type> xvals = evaluate<std::common_type<XT, YT>::type>(coord_exprs[0]);
-        std::vector<std::common_type<XT, YT>::type> yvals = evaluate<std::common_type<XT, YT>::type>(coord_exprs[1]);
-        std::vector<ZT>                             zvals = evaluate<ZT>(coord_exprs[2]);
-
-        int offset = 0;
-
-        for (int i = 0; i < dest.height(); ++i)
-            for (int j = 0; j < dest.width(); ++j)
+            float ft = static_cast<float>(f);
+            for (auto &expr : coord_exprs)
             {
-                unsigned char* ptr = frame.data + frame.step[0] * i + frame.step[1] * j;
-                Color8 c = compress(input.pixel(xvals[offset], yvals[offset], zvals[offset]));
-                offset++;
-                ptr[0] = c.r;
-                ptr[1] = c.g;
-                ptr[2] = c.b;
+                expr->setZ(f);
+                expr->setZ(ft);
             }
 
-        dest.pushFrame(frame);
+            std::vector<std::common_type<XT, YT>::type> xvals = evaluate<std::common_type<XT, YT>::type>(coord_exprs[0]);
+            std::vector<std::common_type<XT, YT>::type> yvals = evaluate<std::common_type<XT, YT>::type>(coord_exprs[1]);
+            std::vector<ZT>                             zvals = evaluate<ZT>(coord_exprs[2]);
+
+            int offset = 0;
+
+            for (int i = 0; i < dest.height(); ++i)
+                for (int j = 0; j < dest.width(); ++j)
+                {
+                    unsigned char* ptr = frame.data + frame.step[0] * i + frame.step[1] * j;
+                    Color8 c = compress(input.pixel(xvals[offset], yvals[offset], zvals[offset]));
+                    offset++;
+                    ptr[0] = c.r;
+                    ptr[1] = c.g;
+                    ptr[2] = c.b;
+                }
+
+            dest.pushFrame(frame);
+        }
+
+        zint = Interval{ static_cast<float>(bend), static_cast<float>(dest.framecount()) };
+        auto frame_togo = coord_exprs[2]->getImage(full_x, full_y, zint);
+        
+        input.keepFrames(static_cast<int>(frame_togo.a), static_cast<int>(frame_togo.b) + 1);
     }
 }
 
@@ -248,7 +266,7 @@ int main(int argc, char *argv[])
     
     std::array<std::unique_ptr<Expression3V>, 3> coord_exprs = sp.parseExprTriplet(expression);
 
-    input.loadFrame(0, input.framecount());
+   // input.loadFrame(0, input.framecount());
 
     auto x_clamp = make_unique<EClampI>(0, input.width()-1);
     auto y_clamp = make_unique<EClampI>(0, input.height()-1);

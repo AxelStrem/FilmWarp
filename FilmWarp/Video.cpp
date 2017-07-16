@@ -106,6 +106,19 @@ void Video::loadFrame(int from, int to)
         readFrame();
 }
 
+void Video::keepFrames(int from, int to)
+{
+    for (int f = 0; f < from; f++)
+    {
+        cached_frames.erase(f);
+    }
+
+    for (int f = to; f < frame_count; f++)
+    {
+        cached_frames.erase(f);
+    }
+}
+
 cv::Mat Video::getFrame(int frame)
 {
     return cached_frames[frame];

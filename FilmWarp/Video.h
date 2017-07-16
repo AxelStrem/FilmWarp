@@ -48,6 +48,8 @@ public:
     void loadFrame(int frame);
     void loadFrame(int from, int to);
 
+    void keepFrames(int from, int to);
+
     cv::Mat getFrame(int frame);
 
     int width() { return resolution.width; }

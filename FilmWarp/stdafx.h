@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <memory>
 #include <array>
+#include <numeric>
 
 #include <boost\range.hpp>
 #include <boost\range\algorithm.hpp>

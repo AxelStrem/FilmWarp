@@ -1,5 +1,20 @@
 #pragma once
 
+struct Interval
+{
+    float a;
+    float b;
+};
+
+Interval operator+(Interval i1, Interval i2);
+
+Interval operator*(Interval i1, Interval i2);
+
+Interval operator*(float x, Interval i);
+
+Interval invert(Interval i);
+
+std::vector<Interval> diff(Interval i1, Interval i2);
 
 class Expression3V
 {
@@ -30,6 +45,8 @@ public:
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
 
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z) { return Interval{ 0,0 }; }
+
     virtual ~Expression3V() {}
 };
 
@@ -40,6 +57,8 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
 
 class EVarY : public Expression3V
@@ -49,6 +68,8 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
 
 class EVarZ : public Expression3V
@@ -58,6 +79,8 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
 
 class ESum : public Expression3V
@@ -67,6 +90,8 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 
     virtual float priority() const;
 };
@@ -78,6 +103,8 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
 
 class EDiv : public Expression3V
@@ -86,6 +113,8 @@ public:
     virtual bool isPrecise() const;
 
     virtual std::vector<float> evaluateF();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
 
 class EMod : public Expression3V
@@ -95,6 +124,8 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
 
 class EFloor : public Expression3V
@@ -104,6 +135,8 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
 
 class EScaleI : public Expression3V
@@ -115,6 +148,8 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
 
 class EScaleF : public Expression3V
@@ -125,6 +160,8 @@ public:
     virtual bool isPrecise() const;
 
     virtual std::vector<float> evaluateF();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
 
 
@@ -138,6 +175,8 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
 
 class EConstF : public Expression3V
@@ -150,6 +189,8 @@ public:
     virtual std::vector<float> evaluateF();
 
     virtual std::vector<int> evaluateI();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
 
 class EClampI : public Expression3V
@@ -161,4 +202,6 @@ public:
 
     virtual std::vector<float> evaluateF();
     virtual std::vector<int> evaluateI();
+
+    virtual Interval getImage(Interval& x, Interval& y, Interval& z);
 };
