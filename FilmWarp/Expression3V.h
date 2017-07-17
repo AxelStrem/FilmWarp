@@ -142,6 +142,7 @@ public:
 class EScaleI : public Expression3V
 {
     int coef;
+    float coef_f;
 public:
     EScaleI(int scalar);
     virtual bool isPrecise() const;
@@ -196,6 +197,7 @@ public:
 class EClampI : public Expression3V
 {
     int low, high;
+    float low_f, high_f;
 public:
     EClampI(int low_, int high_);
     virtual bool isPrecise() const;

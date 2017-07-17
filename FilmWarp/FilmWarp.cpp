@@ -127,14 +127,14 @@ void process3(Video& input, Recorder& dest, std::array<std::unique_ptr<Expressio
         expr->setVars(&coord_xf, &coord_yf);
     }
 
-    Interval full_x{ 0.f, dest.width() };
-    Interval full_y{ 0.f, dest.height() };
+    Interval full_x{ 0.f, static_cast<float>(dest.width()) };
+    Interval full_y{ 0.f, static_cast<float>(dest.height()) };
 
 
-    const int bstep = 4;
+    const int bstep = 24;
     for (int bstart = 0, bend = min(bstep,dest.framecount()); bstart < dest.framecount(); bstart = bend, bend = min(bstart + bstep,dest.framecount()))
     {
-        Interval zint{ bstart,bend };
+        Interval zint{ static_cast<float>(bstart),static_cast<float>(bend) };
         auto frame_span = coord_exprs[2]->getImage(full_x, full_y, zint);
 
         input.loadFrame(static_cast<int>(frame_span.a), static_cast<int>(frame_span.b) + 1);
@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
         string param = argv[a];
         if (!param.empty() && param[0] == '-')
         {
-            int spl = param.find('=');
+            int spl = static_cast<int>(param.find('='));
             params[param.substr(1, spl - 1)] = param.substr(spl + 1);
         }
     }
@@ -255,9 +255,9 @@ int main(int argc, char *argv[])
             pExpr->setZ(0.f);
         }
 
-        apply_result(sz_exprs[0], [&out_w](auto vec) { out_w = vec[0]; });
-        apply_result(sz_exprs[1], [&out_h](auto vec) { out_h = vec[0]; });
-        apply_result(sz_exprs[2], [&out_fc](auto vec) { out_fc = vec[0]; });
+        apply_result(sz_exprs[0], [&out_w](auto vec) { out_w = static_cast<int>(vec[0]); });
+        apply_result(sz_exprs[1], [&out_h](auto vec) { out_h = static_cast<int>(vec[0]); });
+        apply_result(sz_exprs[2], [&out_fc](auto vec) { out_fc = static_cast<int>(vec[0]); });
     }
     
     std::unique_ptr<Recorder> dest = (out_fc>1)

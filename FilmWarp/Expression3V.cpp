@@ -17,7 +17,6 @@ Interval operator*(Interval i1, Interval i2)
 
 Interval operator*(float x, Interval i)
 {
-    Interval result;
     if (x >= 0)
         return Interval{ x*i.a, x*i.b };
     else
@@ -176,7 +175,7 @@ float ESum::priority() const
 }
 
 
-EScaleI::EScaleI(int scalar) : coef(scalar) {}
+EScaleI::EScaleI(int scalar) : coef(scalar), coef_f(static_cast<float>(scalar)) {}
 bool EScaleI::isPrecise() const
 {
     return pChildren[0]->isPrecise();
@@ -187,7 +186,7 @@ std::vector<float> EScaleI::evaluateF()
     auto vec = pChildren[0]->evaluateF();
     for (int i = 0; i < vec.size(); i++)
     {
-        vec[i] *= coef;
+        vec[i] *= coef_f;
     }
     return vec;
 }
@@ -204,7 +203,7 @@ std::vector<int> EScaleI::evaluateI()
 
 Interval EScaleI::getImage(Interval & x, Interval & y, Interval & z)
 {
-    return coef*pChildren[0]->getImage(x,y,z);
+    return coef_f*pChildren[0]->getImage(x,y,z);
 }
 
 EScaleF::EScaleF(float scalar) : coef(scalar) {}
@@ -274,7 +273,7 @@ Interval EConstF::getImage(Interval & x, Interval & y, Interval & z)
     return Interval{ value, value };
 }
 
-EClampI::EClampI(int low_, int high_) : low(low_), high(high_)
+EClampI::EClampI(int low_, int high_) : low(low_), high(high_), low_f(static_cast<float>(low_)), high_f(static_cast<float>(high_))
 {
 }
 
@@ -288,7 +287,7 @@ std::vector<float> EClampI::evaluateF()
     auto vec = pChildren[0]->evaluateF();
     for (int i = 0; i < vec.size(); i++)
     {
-        vec[i] = clamp<float>(vec[i], static_cast<float>(low), static_cast<float>(high));
+        vec[i] = clamp<float>(vec[i], low_f, high_f);
     }
     return vec;
 }
@@ -306,7 +305,7 @@ std::vector<int> EClampI::evaluateI()
 Interval EClampI::getImage(Interval & x, Interval & y, Interval & z)
 {
     Interval i = pChildren[0]->getImage(x, y, z);
-    return Interval{clamp<float>(i.a,low,high), clamp<float>(i.b,low,high)};
+    return Interval{clamp<float>(i.a,low_f,high_f), clamp<float>(i.b,low_f,high_f)};
 }
 
 bool EMult::isPrecise() const
