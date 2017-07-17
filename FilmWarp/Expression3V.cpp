@@ -59,18 +59,18 @@ std::unique_ptr<Expression3V> Expression3V::popChild()
     return r;
 }
 
-void Expression3V::setVars(std::vector<float>* xf_, std::vector<float>* yf_)
+void Expression3V::setVars(SmartSpan<float>* xf_, SmartSpan<float>* yf_)
 {
     xf = xf_; yf = yf_;
-    width = static_cast<int>(yf_->size());
+    width = static_cast<int>(yf_->size);
     for (auto& p : pChildren)
         p->setVars(xf_, yf_);
 }
 
-void Expression3V::setVars(std::vector<int>* xi_, std::vector<int>* yi_)
+void Expression3V::setVars(SmartSpan<int>* xi_, SmartSpan<int>* yi_)
 {
     xi = xi_; yi = yi_;
-    width = static_cast<int>(yi_->size());
+    width = static_cast<int>(yi_->size);
     for (auto& p : pChildren)
         p->setVars(xi_, yi_);
 }
@@ -94,14 +94,14 @@ float Expression3V::priority() const
     return 0.f;
 }
 
-std::vector<float> Expression3V::evaluateF() { return std::vector<float>(width); }
-std::vector<int> Expression3V::evaluateI() { return std::vector<int>(width); }
+SmartSpan<float> Expression3V::evaluateF() { return SmartSpan<float>(width); }
+SmartSpan<int> Expression3V::evaluateI() { return SmartSpan<int>(width); }
 
 
 bool EVarX::isPrecise() const { return true; }
 
-std::vector<float> EVarX::evaluateF() { return *xf; }
-std::vector<int> EVarX::evaluateI() { return *xi; }
+SmartSpan<float> EVarX::evaluateF() { return *xf; }
+SmartSpan<int> EVarX::evaluateI() { return *xi; }
 
 Interval EVarX::getImage(Interval & x, Interval & y, Interval & z)
 {
@@ -110,8 +110,8 @@ Interval EVarX::getImage(Interval & x, Interval & y, Interval & z)
 
 bool EVarY::isPrecise() const { return true; }
 
-std::vector<float> EVarY::evaluateF() { return *yf; }
-std::vector<int> EVarY::evaluateI() { return *yi; }
+SmartSpan<float> EVarY::evaluateF() { return *yf; }
+SmartSpan<int> EVarY::evaluateI() { return *yi; }
 
 Interval EVarY::getImage(Interval & x, Interval & y, Interval & z)
 {
@@ -120,8 +120,8 @@ Interval EVarY::getImage(Interval & x, Interval & y, Interval & z)
 
 bool EVarZ::isPrecise() const { return true; }
 
-std::vector<float> EVarZ::evaluateF() { return std::vector<float>(width, zf); }
-std::vector<int> EVarZ::evaluateI() { return std::vector<int>(width, zi); }
+SmartSpan<float> EVarZ::evaluateF() { return SmartSpan<float>(width, zf); }
+SmartSpan<int> EVarZ::evaluateI() { return SmartSpan<int>(width, zi); }
 
 Interval EVarZ::getImage(Interval & x, Interval & y, Interval & z)
 {
@@ -133,30 +133,22 @@ bool ESum::isPrecise() const
     return std::all_of(pChildren.begin(), pChildren.end(), [](auto& ptr) { return ptr->isPrecise(); });
 }
 
-std::vector<float> ESum::evaluateF()
+SmartSpan<float> ESum::evaluateF()
 {
     auto vec = pChildren[0]->evaluateF();
     for (auto it = pChildren.begin() + 1; it != pChildren.end(); ++it)
     {
-        auto vadd = (*it)->evaluateF();
-        for (int i = 0; i < vec.size(); i++)
-        {
-            vec[i] += vadd[i];
-        }
+        vec = vec + (*it)->evaluateF();
     }
     return vec;
 }
 
-std::vector<int> ESum::evaluateI()
+SmartSpan<int> ESum::evaluateI()
 {
     auto vec = pChildren[0]->evaluateI();
     for (auto it = pChildren.begin() + 1; it != pChildren.end(); ++it)
     {
-        auto vadd = (*it)->evaluateI();
-        for (int i = 0; i < vec.size(); i++)
-        {
-            vec[i] += vadd[i];
-        }
+        vec = vec + (*it)->evaluateI();
     }
     return vec;
 }
@@ -181,23 +173,17 @@ bool EScaleI::isPrecise() const
     return pChildren[0]->isPrecise();
 }
 
-std::vector<float> EScaleI::evaluateF()
+SmartSpan<float> EScaleI::evaluateF()
 {
     auto vec = pChildren[0]->evaluateF();
-    for (int i = 0; i < vec.size(); i++)
-    {
-        vec[i] *= coef_f;
-    }
+    vec = vec * SmartSpan<float>(width, coef_f);
     return vec;
 }
 
-std::vector<int> EScaleI::evaluateI()
+SmartSpan<int> EScaleI::evaluateI()
 {
     auto vec = pChildren[0]->evaluateI();
-    for (int i = 0; i < vec.size(); i++)
-    {
-        vec[i] *= coef;
-    }
+    vec = vec * SmartSpan<int>(width, coef_f);
     return vec;
 }
 
@@ -213,13 +199,10 @@ bool EScaleF::isPrecise() const
     return false;
 }
 
-std::vector<float> EScaleF::evaluateF()
+SmartSpan<float> EScaleF::evaluateF()
 {
     auto vec = pChildren[0]->evaluateF();
-    for (int i = 0; i < vec.size(); i++)
-    {
-        vec[i] *= coef;
-    }
+    vec = vec * SmartSpan<float>(width, coef);
     return vec;
 }
 
@@ -235,14 +218,14 @@ bool EConstI::isPrecise() const
     return true;
 }
 
-std::vector<float> EConstI::evaluateF()
+SmartSpan<float> EConstI::evaluateF()
 {
-    return std::vector<float>(width, value_f);
+    return SmartSpan<float>(width, value_f);
 }
 
-    std::vector<int> EConstI::evaluateI()
+SmartSpan<int> EConstI::evaluateI()
 {
-    return std::vector<int>(width, value);
+    return SmartSpan<int>(width, value);
 }
 
     Interval EConstI::getImage(Interval & x, Interval & y, Interval & z)
@@ -258,14 +241,14 @@ bool EConstF::isPrecise() const
     return false;
 }
 
-std::vector<float> EConstF::evaluateF()
+SmartSpan<float> EConstF::evaluateF()
 {
-    return std::vector<float>(width, value);
+    return SmartSpan<float>(width, value);
 }
 
-std::vector<int> EConstF::evaluateI()
+SmartSpan<int> EConstF::evaluateI()
 {
-    return std::vector<int>(width, 0);
+    return SmartSpan<int>(width, 0);
 }
 
 Interval EConstF::getImage(Interval & x, Interval & y, Interval & z)
@@ -282,22 +265,121 @@ bool EClampI::isPrecise() const
     return pChildren[0]->isPrecise();;
 }
 
-std::vector<float> EClampI::evaluateF()
+template<class T> void sparselinear_clamp(SmartSpan<T>& vec, T low, T high)
+{
+    SmartSpan<T> result;
+    result.type = SpanType::SparseLinear;
+    result.size = vec.size;
+    result.offsets.push_back(0);
+    for (int i = 0; i < vec.offsets.size() - 1; i++)
+    {
+        float v = vec.data[2 * i];
+        float vs = v;
+        float step = vec.data[2 * i + 1];
+        int j = vec.offsets[i];
+
+        if (v < low)
+        {
+            for (; j < vec.offsets[i + 1]; j++, v += step)
+            {
+                if (v > low)
+                {
+                    result.data.push_back(low);
+                    result.data.push_back(0);
+                    result.offsets.push_back(j);
+                    goto loop_mid;
+                }
+            }
+
+            result.data.push_back(low);
+            result.data.push_back(0);
+            result.offsets.push_back(j);
+            goto loop_exit;
+        }
+
+        if (v > high)
+        {
+            for (; j < vec.offsets[i + 1]; j++, v += step)
+            {
+                if (v < high)
+                {
+                    result.data.push_back(high);
+                    result.data.push_back(0);
+                    result.offsets.push_back(j);
+                    goto loop_mid;
+                }
+            }
+
+            result.data.push_back(high);
+            result.data.push_back(0);
+            result.offsets.push_back(j);
+            goto loop_exit;
+        }
+
+    loop_mid:
+        vs = v;
+        int js = j;
+
+        for (; j < vec.offsets[i + 1]; j++, v += step)
+        {
+            if ((v > high) || (v < low))
+            {
+                if (j > js)
+                {
+                    result.data.push_back(vs);
+                    result.data.push_back(step);
+                    result.offsets.push_back(j);
+                }
+                goto loop_last;
+            }
+        }
+
+        result.data.push_back(vs);
+        result.data.push_back(step);
+        result.offsets.push_back(j);
+
+        goto loop_exit;
+    loop_last:
+
+        if (v > high)
+        {
+            result.data.push_back(high);
+            result.data.push_back(0);
+            result.offsets.push_back(j);
+        }
+        else
+        {
+            result.data.push_back(low);
+            result.data.push_back(0);
+            result.offsets.push_back(j);
+        }
+
+    loop_exit:;
+    }
+
+    vec = std::move(result);
+}
+
+SmartSpan<float> EClampI::evaluateF()
 {
     auto vec = pChildren[0]->evaluateF();
-    for (int i = 0; i < vec.size(); i++)
+    switch (vec.type)
     {
-        vec[i] = clamp<float>(vec[i], low_f, high_f);
+    case SpanType::Dense:
+    case SpanType::Sparse: for (auto& val : vec.data) val = clamp<float>(val, low, high);  break;
+    case SpanType::SparseLinear: sparselinear_clamp<float>(vec, low, high);
     }
     return vec;
 }
 
-std::vector<int> EClampI::evaluateI()
+SmartSpan<int> EClampI::evaluateI()
 {
     auto vec = pChildren[0]->evaluateI();
-    for (int i = 0; i < vec.size(); i++)
+    switch(vec.type)
     {
-        vec[i] = clamp<int>(vec[i], low, high);
+    case SpanType::Dense:
+    case SpanType::Sparse: for(auto& val : vec.data) val = clamp<int>(val, low, high);  break;
+    case SpanType::SparseLinear:  sparselinear_clamp<int>(vec, low, high); break;
     }
     return vec;
 }
@@ -313,30 +395,22 @@ bool EMult::isPrecise() const
     return std::all_of(pChildren.begin(), pChildren.end(), [](auto& ptr) { return ptr->isPrecise(); });
 }
 
-std::vector<float> EMult::evaluateF()
+SmartSpan<float> EMult::evaluateF()
 {
     auto vec = pChildren[0]->evaluateF();
     for (auto it = pChildren.begin() + 1; it != pChildren.end(); ++it)
     {
-        auto vmul = (*it)->evaluateF();
-        for (int i = 0; i < vec.size(); i++)
-        {
-            vec[i] *= vmul[i];
-        }
+        vec = vec * (*it)->evaluateF();
     }
     return vec;
 }
 
-std::vector<int> EMult::evaluateI()
+SmartSpan<int> EMult::evaluateI()
 {
     auto vec = pChildren[0]->evaluateI();
     for (auto it = pChildren.begin() + 1; it != pChildren.end(); ++it)
     {
-        auto vmul = (*it)->evaluateI();
-        for (int i = 0; i < vec.size(); i++)
-        {
-            vec[i] *= vmul[i];
-        }
+        vec = vec * (*it)->evaluateI();
     }
     return vec;
 }
@@ -354,26 +428,24 @@ bool EMod::isPrecise() const
     return std::all_of(pChildren.begin(), pChildren.end(), [](auto& ptr) { return ptr->isPrecise(); });
 }
 
-std::vector<float> EMod::evaluateF()
+SmartSpan<float> EMod::evaluateF()
 {
+
     auto vec = pChildren[0]->evaluateF();
     auto vop = pChildren[1]->evaluateF();
-    for (int i = 0; i < vec.size(); i++)
-    {
-        float dv = vec[i] / vop[i];
-        vec[i] = vec[i] - floor(dv)*vop[i];
-    }
+
+    generic_op(vec, vop, [](float x, float y) { return x - floor(x/y)*y; });
+
     return vec;
 }
 
-std::vector<int> EMod::evaluateI()
+SmartSpan<int> EMod::evaluateI()
 {
     auto vec = pChildren[0]->evaluateI();
     auto vop = pChildren[1]->evaluateI();
-    for (int i = 0; i < vec.size(); i++)
-    {
-        vec[i] %= vop[i];
-    }
+
+    generic_op(vec, vop, [](int x, int y) { return x%y; });
+
     return vec;
 }
 
@@ -393,14 +465,13 @@ bool EDiv::isPrecise() const
     return false;
 }
 
-std::vector<float> EDiv::evaluateF()
+SmartSpan<float> EDiv::evaluateF()
 {
     auto vec = pChildren[0]->evaluateF();
     auto vop = pChildren[1]->evaluateF();
-    for (int i = 0; i < vec.size(); i++)
-    {
-        vec[i] /= vop[i];
-    }
+
+    generic_op(vec, vop, [](auto &x, auto &y) { return x / y; });
+
     return vec;
 }
 
@@ -416,26 +487,33 @@ bool EFloor::isPrecise() const
     return std::all_of(pChildren.begin(), pChildren.end(), [](auto& ptr) { return ptr->isPrecise(); });
 }
 
-std::vector<float> EFloor::evaluateF()
+float floor_op(float a, float b)
+{
+    return floor(a / b)*b;
+}
+
+int floor_op(int a, int b)
+{
+    return a - (a%b);
+}
+
+SmartSpan<float> EFloor::evaluateF()
 {
     auto vec = pChildren[0]->evaluateF();
     auto vop = pChildren[1]->evaluateF();
-    for (int i = 0; i < vec.size(); i++)
-    {
-        float dv = vec[i] / vop[i];
-        vec[i] = floor(dv)*vop[i];
-    }
+
+    generic_op(vec, vop, [](auto &x, auto &y) { return floor_op(x, y); });
+
     return vec;
 }
 
-std::vector<int> EFloor::evaluateI()
+SmartSpan<int> EFloor::evaluateI()
 {
     auto vec = pChildren[0]->evaluateI();
     auto vop = pChildren[1]->evaluateI();
-    for (int i = 0; i < vec.size(); i++)
-    {
-        vec[i] -= vec[i]%vop[i];
-    }
+
+    generic_op(vec, vop, [](auto &x, auto &y) { return floor_op(x, y); });
+
     return vec;
 }
 

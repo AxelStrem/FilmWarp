@@ -81,12 +81,12 @@ public:
     }
 };
 
-template<class T> std::vector<T> evaluate(std::unique_ptr<Expression3V>& pExpr)
+template<class T> SmartSpan<T> evaluate(std::unique_ptr<Expression3V>& pExpr)
 {
     return pExpr->evaluateI();
 }
 
-template<> std::vector<float> evaluate(std::unique_ptr<Expression3V>& pExpr)
+template<> SmartSpan<float> evaluate(std::unique_ptr<Expression3V>& pExpr)
 {
     return pExpr->evaluateF();
 }
@@ -109,17 +109,36 @@ void process3(Video& input, Recorder& dest, std::array<std::unique_ptr<Expressio
     Mat frame = dest.getSampleFrame();
 
     int pixel_amount = dest.width() * dest.height();
-    std::vector<int> coord_x(pixel_amount), coord_y(pixel_amount);
-    std::vector<float> coord_xf(pixel_amount), coord_yf(pixel_amount);
+    
+    SmartSpan<int> coord_x, coord_y;
+    SmartSpan<float> coord_xf, coord_yf;
+
+    coord_x.size = coord_y.size = coord_xf.size = coord_yf.size = pixel_amount;
+
+    coord_x.type = coord_xf.type = SpanType::SparseLinear;
+    coord_y.type = coord_yf.type = SpanType::Sparse;
+
+    coord_x.offsets.clear();
+
+    for (int i = 0; i < dest.height() + 1; i++)
+        coord_x.offsets.push_back(i*dest.width());
+
+    coord_y.offsets = coord_xf.offsets = coord_yf.offsets = coord_x.offsets;
+
+    coord_x.data.clear();
+    coord_xf.data.clear();
+    coord_y.data.clear();
+    coord_yf.data.clear();
 
     for (int i = 0; i < dest.height(); i++)
-        for (int j = 0; j < dest.width(); j++)
-        {
-            coord_x[i*dest.width() + j] = j;
-            coord_y[i*dest.width() + j] = i;
-            coord_xf[i*dest.width() + j] = static_cast<float>(j);
-            coord_yf[i*dest.width() + j] = static_cast<float>(i);
-        }
+    {
+        coord_x.data.push_back(0);
+        coord_x.data.push_back(1);
+        coord_xf.data.push_back(0.f);
+        coord_xf.data.push_back(1.f);
+        coord_y.data.push_back(i);
+        coord_yf.data.push_back(static_cast<float>(i));
+    }
 
     for (auto &expr : coord_exprs)
     {
@@ -148,9 +167,17 @@ void process3(Video& input, Recorder& dest, std::array<std::unique_ptr<Expressio
                 expr->setZ(ft);
             }
 
-            std::vector<std::common_type<XT, YT>::type> xvals = evaluate<std::common_type<XT, YT>::type>(coord_exprs[0]);
-            std::vector<std::common_type<XT, YT>::type> yvals = evaluate<std::common_type<XT, YT>::type>(coord_exprs[1]);
-            std::vector<ZT>                             zvals = evaluate<ZT>(coord_exprs[2]);
+            SmartSpan<std::common_type<XT, YT>::type> xvals_s = evaluate<std::common_type<XT, YT>::type>(coord_exprs[0]);
+            SmartSpan<std::common_type<XT, YT>::type> yvals_s = evaluate<std::common_type<XT, YT>::type>(coord_exprs[1]);
+            SmartSpan<ZT>                             zvals_s = evaluate<ZT>(coord_exprs[2]);
+
+            xvals_s.to_dense();
+            yvals_s.to_dense();
+            zvals_s.to_dense();
+
+            auto xvals = xvals_s.data;
+            auto yvals = yvals_s.data;
+            auto zvals = zvals_s.data;
 
             int offset = 0;
 
@@ -245,8 +272,9 @@ int main(int argc, char *argv[])
     if (params.find("s") != params.end())
     {
         auto sz_exprs = sp.parseExprTriplet(params["s"]);
-        std::vector<int> nvec_i{ 0 };
-        std::vector<float> nvec_f{ 0.f };
+        SmartSpan<int> nvec_i(1, 0);
+        SmartSpan<float> nvec_f(1, 0.f);
+        
         for (auto& pExpr : sz_exprs)
         {
             pExpr->setVars(&nvec_i, &nvec_i);
@@ -255,9 +283,9 @@ int main(int argc, char *argv[])
             pExpr->setZ(0.f);
         }
 
-        apply_result(sz_exprs[0], [&out_w](auto vec) { out_w = static_cast<int>(vec[0]); });
-        apply_result(sz_exprs[1], [&out_h](auto vec) { out_h = static_cast<int>(vec[0]); });
-        apply_result(sz_exprs[2], [&out_fc](auto vec) { out_fc = static_cast<int>(vec[0]); });
+        apply_result(sz_exprs[0], [&out_w](auto vec) { out_w = static_cast<int>(vec.data[0]); });
+        apply_result(sz_exprs[1], [&out_h](auto vec) { out_h = static_cast<int>(vec.data[0]); });
+        apply_result(sz_exprs[2], [&out_fc](auto vec) { out_fc = static_cast<int>(vec.data[0]); });
     }
     
     std::unique_ptr<Recorder> dest = (out_fc>1)

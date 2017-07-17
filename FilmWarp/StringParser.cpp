@@ -132,7 +132,7 @@ int StringParser::operatorPriority(char c)
     case '/': return 2;
     case '#': return 2;
     case '_': return 2;
-    case '^': return 3;
+    case '^': return 2;
     }
     return -1;
 }
