@@ -153,6 +153,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Expression3V.h" />
+    <ClInclude Include="FilmWarp.h" />
     <ClInclude Include="Recorder.h" />
     <ClInclude Include="SmartSpan.h" />
     <ClInclude Include="stdafx.h" />
