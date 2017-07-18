@@ -183,7 +183,6 @@ template<class T> void sparselinear_add(SmartSpan<T>& dst, const SmartSpan<T>& s
             }
         }
     }
-    result.offsets.push_back(result.size);
     dst = std::move(result);
 }
 
@@ -292,7 +291,6 @@ template<class T> void sparselinear_mult(SmartSpan<T>& dst, const SmartSpan<T>& 
             }
         }
 
-        result.offsets.push_back(result.size);
         dst = std::move(result);
     }
 }
