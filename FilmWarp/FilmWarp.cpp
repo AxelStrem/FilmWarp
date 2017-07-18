@@ -125,6 +125,12 @@ void process3(Video& input, Recorder& dest, std::array<std::unique_ptr<Expressio
 
         zint = Interval{ static_cast<float>(bend), static_cast<float>(dest.framecount()) };
         auto frame_togo = coord_exprs[2]->getImage(full_x, full_y, zint);
+
+        while ((length(zint) > bstep) && (length(frame_togo) > input.max_frames()))
+        {
+            zint.b = zint.a + (zint.b - zint.a) / 2;
+            frame_togo = coord_exprs[2]->getImage(full_x, full_y, zint);
+        }
         
         input.keepFrames(static_cast<int>(frame_togo.a), static_cast<int>(frame_togo.b) + 1);
     }
@@ -193,6 +199,8 @@ int main(int argc, char *argv[])
     int out_h  = input.height();
     int out_fc = input.framecount();
     double out_fps = input.fps();
+
+    input.setMaxFrames(128);
 
     StringParser sp;
     sp.setConsts(input.width(), input.height(), input.framecount());

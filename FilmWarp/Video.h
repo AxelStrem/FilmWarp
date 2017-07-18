@@ -29,6 +29,7 @@ class Video
     double source_fps;
     int frame_count;
     int codec_fourcc;
+    int maxframes;
 
     int current_frame;
     std::string file;
@@ -44,6 +45,7 @@ public:
     void loadFrame(int from, int to);
 
     void keepFrames(int from, int to);
+    void setMaxFrames(int mf);
 
     cv::Mat getFrame(int frame);
 
@@ -52,6 +54,7 @@ public:
     double fps() { return source_fps; }
     int framecount() { return frame_count; }
     int fourcc() { return codec_fourcc; }
+    int max_frames() { return maxframes; }
 
     Color8 pixel(int x, int y, int frame);
     Color32 pixel(float x, int y, int frame);

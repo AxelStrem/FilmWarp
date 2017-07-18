@@ -70,6 +70,7 @@ Video::Video(std::string filename) : source(filename), file(filename), current_f
 
     source_fps = (source.get(CAP_PROP_FPS));
     frame_count = static_cast<int>(source.get(CAP_PROP_FRAME_COUNT));
+    maxframes - frame_count;
 
     codec_fourcc = static_cast<int>(source.get(CAP_PROP_FOURCC));
 }
@@ -117,6 +118,11 @@ void Video::keepFrames(int from, int to)
     {
         cached_frames.erase(f);
     }
+}
+
+void Video::setMaxFrames(int mf)
+{
+    maxframes = mf;
 }
 
 cv::Mat Video::getFrame(int frame)

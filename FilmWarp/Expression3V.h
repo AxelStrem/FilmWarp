@@ -13,6 +13,7 @@ Interval operator*(Interval i1, Interval i2);
 Interval operator*(float x, Interval i);
 Interval invert(Interval i);
 std::vector<Interval> diff(Interval i1, Interval i2);
+float length(Interval i);
 
 class Expression3V
 {

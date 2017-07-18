@@ -33,6 +33,12 @@ Interval invert(Interval i)
     return result;
 }
 
+float length(Interval i)
+{
+    return fabs(i.b - i.a);
+}
+
+
 std::vector<Interval> diff(Interval i1, Interval i2)
 {
     std::vector<Interval> result;
@@ -428,14 +434,32 @@ bool EMod::isPrecise() const
     return std::all_of(pChildren.begin(), pChildren.end(), [](auto& ptr) { return ptr->isPrecise(); });
 }
 
+float mod(float x, float y)
+{
+    return x - floor(x / y)*y;
+}
+
+int mod(int x, int y)
+{
+    return x%y;
+}
+
+template<class T> void mod_spans(SmartSpan<T>& vec, const SmartSpan<T>& vop)
+{
+    // if ((vec.type == SpanType::SparseLinear) && (vop.type == SpanType::Sparse))
+    // {
+    //      // can be improved in to return SparseLinear span in this case      
+    // }
+
+    generic_op(vec, vop, [](auto x, auto y) { return mod(x, y); });
+}
+
 SmartSpan<float> EMod::evaluateF()
 {
-
     auto vec = pChildren[0]->evaluateF();
     auto vop = pChildren[1]->evaluateF();
 
-    generic_op(vec, vop, [](float x, float y) { return x - floor(x/y)*y; });
-
+    mod_spans<float>(vec, vop);
     return vec;
 }
 
@@ -444,8 +468,7 @@ SmartSpan<int> EMod::evaluateI()
     auto vec = pChildren[0]->evaluateI();
     auto vop = pChildren[1]->evaluateI();
 
-    generic_op(vec, vop, [](int x, int y) { return x%y; });
-
+    mod_spans<int>(vec, vop);
     return vec;
 }
 
