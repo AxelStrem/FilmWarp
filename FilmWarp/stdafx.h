@@ -16,6 +16,7 @@
 #include <memory>
 #include <array>
 #include <numeric>
+#include <functional>
 
 #include <boost\range.hpp>
 #include <boost\range\algorithm.hpp>

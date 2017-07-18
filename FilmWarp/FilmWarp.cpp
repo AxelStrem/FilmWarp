@@ -33,7 +33,9 @@ int main(int argc, char *argv[])
 
     input.setMaxFrames(128);
 
+    FilmWarper fw;
     StringParser sp;
+
     sp.setConsts(input.width(), input.height(), input.framecount());
 
     if (params.find("s") != params.end())
@@ -53,6 +55,18 @@ int main(int argc, char *argv[])
         apply_result(sz_exprs[0], [&out_w](auto vec) { out_w = static_cast<int>(vec.data[0]); });
         apply_result(sz_exprs[1], [&out_h](auto vec) { out_h = static_cast<int>(vec.data[0]); });
         apply_result(sz_exprs[2], [&out_fc](auto vec) { out_fc = static_cast<int>(vec.data[0]); });
+    }
+
+    if (params.find("p") != params.end())
+    {
+        if (params["p"] == std::string("1"))
+        {
+            fw.setFrameCallback([out_fc](int frame)
+            {
+                int percentage = (frame * 100) / out_fc;
+                cout << '\r' << percentage << "%   ";
+            });
+        }
     }
     
     std::unique_ptr<Recorder> dest = (out_fc>1)
@@ -75,7 +89,6 @@ int main(int argc, char *argv[])
     coord_exprs[1] = move(y_clamp);
     coord_exprs[2] = move(z_clamp);
 
-    FilmWarper fw;
 
     fw.process(input, *dest, coord_exprs);
 

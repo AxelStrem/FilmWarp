@@ -6,6 +6,7 @@
 
 class FilmWarper
 {
+    std::function<void(int)> callback_onframe;
 
     template<class T> SmartSpan<T> evaluate(std::unique_ptr<Expression3V>& pExpr)
     {
@@ -109,6 +110,8 @@ class FilmWarper
                     }
 
                 dest.pushFrame(frame);
+                if(callback_onframe)
+                    callback_onframe(f);
             }
 
             zint = Interval{ static_cast<float>(bend), static_cast<float>(dest.framecount()) };
@@ -161,6 +164,11 @@ public:
         {
             process1<float>(input, dest, coord_exprs);
         }
+    }
+
+    void setFrameCallback(const std::function<void(int)>& func)
+    {
+        callback_onframe = func;
     }
 };
 
