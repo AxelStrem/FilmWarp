@@ -16,7 +16,6 @@ class StringParser
     std::unique_ptr<Expression3V> readBrackets(std::string& expr);
     std::unique_ptr<Expression3V> readNumber(std::string& expr);
     std::unique_ptr<Expression3V> readTerm(std::string& expr);
-    std::unique_ptr<Expression3V> readOperator(std::string& expr);
     int operatorPriority(char c);
     std::unique_ptr<Expression3V> formBinaryOp(char op, std::unique_ptr<Expression3V> c1, std::unique_ptr<Expression3V> c2);
     std::unique_ptr<Expression3V> parseExpressionRanked(std::string &expr, int priority);

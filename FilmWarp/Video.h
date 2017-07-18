@@ -1,10 +1,5 @@
 #pragma once
 
-struct IOError
-{
-    std::string message;
-};
-
 struct Color8
 {
     unsigned char r;

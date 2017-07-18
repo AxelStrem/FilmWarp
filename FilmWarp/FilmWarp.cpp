@@ -1,85 +1,11 @@
 #include "stdafx.h"
 #include "Expression3V.h"
 #include "Video.h"
+#include "Recorder.h"
 #include "StringParser.h"
 
 using namespace std;
 using namespace cv;
-
-class Recorder
-{
-    cv::Size resolution;
-    double target_fps;
-    int frame_count;
-    int codec_fourcc;
-public:
-    Recorder(int fourcc, double fps, cv::Size res, int target_framecount)
-        : resolution(res), target_fps(fps), frame_count(target_framecount), codec_fourcc(fourcc)
-    {}
-
-    virtual void pushFrame(cv::Mat& frame) = 0;
-    virtual cv::Mat getSampleFrame() = 0;
-
-    int width() { return resolution.width; }
-    int height() { return resolution.height; }
-    double fps() { return target_fps; }
-    int framecount() { return frame_count; }
-    int fourcc() { return codec_fourcc; }
-
-    virtual ~Recorder() {}
-};
-
-class VideoRecorder : public Recorder
-{
-    cv::VideoWriter dest;
-public:
-    VideoRecorder(std::string filename, int fourcc, double fps, cv::Size res, int target_framecount)
-    : Recorder(fourcc, fps, res, target_framecount), dest(filename, fourcc, fps, res, true)
-    {
-        if (!dest.isOpened())
-        {
-            throw IOError{ "Could not open output file" };
-        }
-    }
-
-    virtual void pushFrame(cv::Mat& frame)
-    {
-        dest << frame;
-    }
-
-    virtual cv::Mat getSampleFrame()
-    {
-        return cv::Mat(cv::Size(width(),height()), CV_8UC3);
-    }
-};
-
-class ImageRecorder : public Recorder
-{
-    cv::Mat data;
-    std::string fname;
-public:
-    ImageRecorder(std::string filename, cv::Size res)
-        : Recorder(0, 0.0, res, 1), fname(filename)
-    {
-
-    }
-
-    virtual void pushFrame(cv::Mat& frame)
-    {
-        frame.copyTo(data);
-    }
-
-    virtual cv::Mat getSampleFrame()
-    {
-        return cv::Mat(cv::Size(width(), height()), CV_8UC3);
-    }
-
-    virtual ~ImageRecorder()
-    {
-        cv::InputArray res(data);
-        cv::imwrite(fname, res);
-    }
-};
 
 template<class T> SmartSpan<T> evaluate(std::unique_ptr<Expression3V>& pExpr)
 {
@@ -178,6 +104,8 @@ void process3(Video& input, Recorder& dest, std::array<std::unique_ptr<Expressio
             auto xvals = xvals_s.data;
             auto yvals = yvals_s.data;
             auto zvals = zvals_s.data;
+
+            
 
             int offset = 0;
 

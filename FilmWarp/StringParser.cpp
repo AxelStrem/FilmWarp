@@ -112,16 +112,6 @@ std::unique_ptr<Expression3V> StringParser::readTerm(std::string& expr)
     throw ParseError{ "Parsing error: unknown symbol" };
 }
 
-
-std::unique_ptr<Expression3V> StringParser::readOperator(std::string& expr)
-{
-    if (expr[0] == '+')
-    {
-        expr = expr.substr(1);
-        return make_unique<ESum>();
-    }
-}
-
 int StringParser::operatorPriority(char c)
 {
     switch (c)

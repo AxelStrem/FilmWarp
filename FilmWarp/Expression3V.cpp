@@ -183,7 +183,7 @@ SmartSpan<float> EScaleI::evaluateF()
 SmartSpan<int> EScaleI::evaluateI()
 {
     auto vec = pChildren[0]->evaluateI();
-    vec = vec * SmartSpan<int>(width, coef_f);
+    vec = vec * SmartSpan<int>(width, coef);
     return vec;
 }
 
@@ -273,9 +273,9 @@ template<class T> void sparselinear_clamp(SmartSpan<T>& vec, T low, T high)
     result.offsets.push_back(0);
     for (int i = 0; i < vec.offsets.size() - 1; i++)
     {
-        float v = vec.data[2 * i];
-        float vs = v;
-        float step = vec.data[2 * i + 1];
+        T v = vec.data[2 * i];
+        T vs = v;
+        T step = vec.data[2 * i + 1];
         int j = vec.offsets[i];
 
         if (v < low)
@@ -366,8 +366,8 @@ SmartSpan<float> EClampI::evaluateF()
     switch (vec.type)
     {
     case SpanType::Dense:
-    case SpanType::Sparse: for (auto& val : vec.data) val = clamp<float>(val, low, high);  break;
-    case SpanType::SparseLinear: sparselinear_clamp<float>(vec, low, high);
+    case SpanType::Sparse: for (auto& val : vec.data) val = clamp<float>(val, low_f, high_f);  break;
+    case SpanType::SparseLinear: sparselinear_clamp<float>(vec, low_f, high_f);
     }
     return vec;
 }

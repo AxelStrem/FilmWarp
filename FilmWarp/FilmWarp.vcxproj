@@ -153,6 +153,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Expression3V.h" />
+    <ClInclude Include="Recorder.h" />
+    <ClInclude Include="SmartSpan.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StringParser.h" />
     <ClInclude Include="targetver.h" />
@@ -161,6 +163,7 @@
   <ItemGroup>
     <ClCompile Include="Expression3V.cpp" />
     <ClCompile Include="FilmWarp.cpp" />
+    <ClCompile Include="Recorder.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
