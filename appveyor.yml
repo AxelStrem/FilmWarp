@@ -3,8 +3,7 @@ install:
   - cmd: ECHO "INSTALL OPENCV:"
   - cmd: choco install OpenCV
   - cmd: refreshenv
-  - cmd: dir C:\tools\opencv\build
-  - cmd: dir C:\tools\opencv\sources
+  - cmd: setx OPENCV_DIR C:\tools\opencv\build
   - cmd: ECHO %OPENCV_DIR%
   - cmd: ECHO %PATH%
 image: Visual Studio 2017
