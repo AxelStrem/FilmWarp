@@ -76,8 +76,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(OPENCV_DIR)\install\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(OPENCV_DIR)\install\x64\vc15\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(OPENCV_DIR)\include;$(OPENCV_DIR)\install\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(OPENCV_DIR)\install\x64\vc15\lib;$(OPENCV_DIR)\bin;$(LibraryPath)</LibraryPath>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <CodeAnalysisRuleSet>E:\Microsoft Visual Studio\2017\Enterprise\Team Tools\Static Analysis Tools\Rule Sets\NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <EnableCppCoreCheck>true</EnableCppCoreCheck>
@@ -88,8 +88,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(OPENCV_DIR)\install\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(OPENCV_DIR)\install\x64\vc15\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(OPENCV_DIR)\include;$(OPENCV_DIR)\install\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(OPENCV_DIR)\install\x64\vc15\lib;$(OPENCV_DIR)\bin;$(LibraryPath)</LibraryPath>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <CodeAnalysisRuleSet>E:\Microsoft Visual Studio\2017\Enterprise\Team Tools\Static Analysis Tools\Rule Sets\NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <EnableCppCoreCheck>true</EnableCppCoreCheck>
