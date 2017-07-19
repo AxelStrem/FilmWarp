@@ -2,6 +2,7 @@ version: 1.0.{build}
 install:
   - cmd: ECHO "INSTALL OPENCV:"
   - cmd: choco install OpenCV
+  - cmd: refreshenv
   - cmd: ECHO %OPENCV-DIR%
   - cmd: ECHO %PATH%
 image: Visual Studio 2017
