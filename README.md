@@ -18,7 +18,7 @@ The tool to morph & distort videos
 
 ### Examples
 
-- vertical flip: `FilmWarp in.mp4 out.mp4 [x;h-y;l]`  
+- vertical flip: `FilmWarp in.mp4 out.mp4 [x;h-y;z]`  
 ![ezgif-1-790f38b76f](https://user-images.githubusercontent.com/11349690/28335541-696e0bd4-6c07-11e7-9662-996020434474.gif)
 
 - rolling shutter: `FilmWarp in.mp4 out.mp4 [x;y;z-y*0.1]`
