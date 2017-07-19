@@ -1,4 +1,4 @@
-# FilmWarp
+# FilmWarp [![Build status](https://ci.appveyor.com/api/projects/status/gtmiqnihr8b185tx?svg=true)](https://ci.appveyor.com/project/AxelStrem/filmwarp)
 The tool to morph & distort videos  
 
 ![ezgif-1-a7d547e44e](https://user-images.githubusercontent.com/11349690/28335444-167668fe-6c07-11e7-8a37-43b5a5b2f1b8.gif)
