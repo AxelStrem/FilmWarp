@@ -18,10 +18,6 @@
 #include <numeric>
 #include <functional>
 
-#include <boost\range.hpp>
-#include <boost\range\algorithm.hpp>
-#include <boost\container\vector.hpp>
-
 #include <opencv2\core.hpp>
 #include <opencv2\imgproc.hpp> 
 #include <opencv2\videoio.hpp>
