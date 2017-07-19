@@ -6,6 +6,7 @@ install:
   - cmd: ECHO %OPENCV-DIR%\bin
   - cmd: ECHO %OPENCV-DIR%\include
   - cmd: ECHO %PATH%
+  - cmd: dir %OPENCV_DIR%
 image: Visual Studio 2017
 build:
   verbosity: minimal
