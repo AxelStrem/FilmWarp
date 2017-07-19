@@ -6,8 +6,8 @@ install:
   - cmd: refreshenv
   - cmd: ECHO %OPENCV_DIR%
   - cmd: ECHO %PATH%
-  - cmd: dir %OPENCV-DIR%\bin
-  - cmd: dir %OPENCV-DIR%\include
+  - cmd: dir %OPENCV_DIR%\bin
+  - cmd: dir %OPENCV_DIR%\include
 image: Visual Studio 2017
 build:
   verbosity: minimal
