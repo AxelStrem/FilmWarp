@@ -5,8 +5,7 @@ The tool to morph & distort videos
 
 ### Download & Requirements
 
-- [Win64 executable](https://sourceforge.net/projects/filmwarp/files/FilmWarp.exe/download)
-- requires [opencv](http://opencv.org/releases.html); ([Prebuilt Win64 binaries](https://sourceforge.net/projects/filmwarp/files/opencv.zip/download))
+- [Win64 executable](https://sourceforge.net/projects/filmwarp/files/FilmWarp.zip/download)
 
 ### Calling Syntax
 
