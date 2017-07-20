@@ -66,12 +66,12 @@ class FilmWarper
 
 
         const int bstep = 24;
-        for (int bstart = 0, bend = min(bstep, dest.framecount()); bstart < dest.framecount(); bstart = bend, bend = min(bstart + bstep, dest.framecount()))
+        for (int bstart = 0, bend = min(bstart+bstep, dest.framecount()); bstart < dest.framecount(); bstart = bend, bend = min(bstart + bstep, dest.framecount()))
         {
             Interval zint{ static_cast<float>(bstart),static_cast<float>(bend) };
             auto frame_span = coord_exprs[2]->getImage(full_x, full_y, zint);
 
-            input.loadFrame(static_cast<int>(frame_span.a), static_cast<int>(frame_span.b) + 1);
+            input.loadFrame(static_cast<int>(frame_span.a), static_cast<int>(frame_span.b) + 2);
 
             for (int f = bstart; f < bend; f++)
             {
@@ -123,7 +123,7 @@ class FilmWarper
                 frame_togo = coord_exprs[2]->getImage(full_x, full_y, zint);
             }
 
-            input.keepFrames(static_cast<int>(frame_togo.a), static_cast<int>(frame_togo.b) + 1);
+            input.keepFrames(static_cast<int>(frame_togo.a), static_cast<int>(frame_togo.b) + 2);
         }
     }
 

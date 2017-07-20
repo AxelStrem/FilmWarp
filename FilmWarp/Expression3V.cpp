@@ -477,7 +477,7 @@ Interval EMod::getImage(Interval & x, Interval & y, Interval & z)
     Interval a = pChildren[0]->getImage(x, y, z);
     Interval b = pChildren[1]->getImage(x, y, z);
 
-    if (a.b <= b.a)
+    if (a.a > 0 && a.b <= b.a)
         return a;
 
     return Interval{ 0.f, b.b};
